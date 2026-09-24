@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import '../styles/globals.css';
 
 export const metadata: Metadata = {
-  title: 'Enterprise Automation Platform',
-  description: 'AI-Driven Enterprise Automation & Orchestration',
+  title: 'Voltus – Automation Platform',
+  description: 'Voltus AI-Powered Email & Document Automation Platform',
 };
 
 export default function RootLayout({
@@ -13,6 +13,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+      </head>
       <body>{children}</body>
     </html>
   );

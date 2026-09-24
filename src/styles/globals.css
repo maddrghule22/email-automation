@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @import './tokens.css';
 
 *, *::before, *::after {
@@ -7,57 +8,75 @@
 }
 
 html, body {
-  font-family: var(--font-family-base);
-  background-color: var(--color-background);
-  color: var(--color-text-base);
+  font-family: var(--font);
+  background-color: var(--surface-bg);
+  color: var(--text-primary);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-size: 14px;
 }
 
-a {
-  color: inherit;
-  text-decoration: none;
-}
+a { color: inherit; text-decoration: none; }
+button { font-family: inherit; cursor: pointer; border: none; background: none; }
+input { font-family: inherit; }
 
-button {
-  font-family: inherit;
+/* ── Utility ──────────────────────────────────── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 100px;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
 }
-
-/* Existing Global Utility Classes from Starter */
-.glass-panel {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-}
-
-.hover-lift {
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
-}
-
-.hover-lift:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-}
+.badge-ai    { background: var(--ai-bg);     color: var(--ai-color); }
+.badge-doc   { background: #ede9fe;           color: #6d28d9; }
+.badge-approve { background: #fef3c7;         color: #92400e; }
+.badge-sent  { background: var(--green-bg);   color: #065f46; }
 
 .btn {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-md);
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
+  transition: all var(--t);
   border: 1px solid transparent;
-  outline: none;
-  transition: all var(--transition-fast);
 }
-
 .btn-primary {
-  background-color: var(--accent-primary);
+  background: var(--voltus-blue);
   color: #fff;
 }
+.btn-primary:hover { background: #1d4ed8; }
 
-.btn-primary:hover {
-  filter: brightness(0.9);
+.btn-secondary {
+  background: var(--surface-card);
+  color: var(--text-primary);
+  border-color: var(--border-light);
 }
+.btn-secondary:hover { background: #f8fafc; }
+
+.btn-outline {
+  background: transparent;
+  color: var(--text-secondary);
+  border-color: var(--border-light);
+}
+.btn-outline:hover { background: #f8fafc; }
+
+/* Legacy compat */
+.glass-panel {
+  background: var(--surface-card);
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  box-shadow: var(--shadow-card);
+}
+.hover-lift { transition: transform var(--t), box-shadow var(--t); }
+.hover-lift:hover { transform: translateY(-1px); box-shadow: var(--shadow-hover); }
+.btn-primary { background-color: var(--voltus-blue); color: #fff; }
+.btn-primary:hover { filter: brightness(0.9); }

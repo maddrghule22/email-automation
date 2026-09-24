@@ -1,61 +1,443 @@
-.dashboard {
+/* ── Page shell ────────────────────────────────── */
+.page {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 20px;
+  min-height: 100%;
 }
 
-.header h1 {
-  font-size: 1.875rem;
-  margin-bottom: 0.5rem;
-}
-
-.header p {
-  color: var(--text-secondary);
-}
-
-.grid {
+/* ── Stats row ─────────────────────────────────── */
+.statsRow {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+.statCard {
+  background: var(--surface-card);
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: var(--shadow-card);
+  transition: box-shadow var(--t);
+}
+.statCard:hover { box-shadow: var(--shadow-hover); }
+.statTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.statLabel {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+.statValue {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1;
+}
+.statIconWrap {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.statTrend {
+  font-size: 11.5px;
+  font-weight: 500;
+}
+.trendUp   { color: var(--green); }
+.trendDown { color: var(--red); }
+
+/* ── Three-panel layout ────────────────────────── */
+.panels {
+  display: grid;
+  grid-template-columns: 260px 1fr 280px;
+  gap: 14px;
+  flex: 1;
+  min-height: 0;
 }
 
-.card {
-  padding: 1.5rem;
+/* ── Shared panel styles ───────────────────────── */
+.inboxPanel,
+.emailPanel,
+.docPanel {
+  background: var(--surface-card);
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  box-shadow: var(--shadow-card);
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  overflow: hidden;
 }
 
-.cardHeader {
+.panelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-light);
+  flex-shrink: 0;
+}
+.panelTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.panelActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.iconBtn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: var(--surface-bg);
+  border: 1px solid var(--border-light);
+  color: var(--text-secondary);
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--t);
+}
+.iconBtn:hover { background: #e8edf5; }
+.filterSelect {
+  font-size: 12px;
+  border: 1px solid var(--border-light);
+  border-radius: 6px;
+  padding: 4px 8px;
+  color: var(--text-primary);
+  background: var(--surface-bg);
+  cursor: pointer;
+  outline: none;
+}
+
+/* ── Inbox list ────────────────────────────────── */
+.inboxList {
+  overflow-y: auto;
+  flex: 1;
+}
+.inboxItem {
+  display: flex;
+  gap: 10px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-light);
+  cursor: pointer;
+  transition: background var(--t);
+}
+.inboxItem:hover { background: #f8fafc; }
+.inboxItemActive { background: #eff6ff !important; }
+.inboxAvatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.inboxBody { flex: 1; min-width: 0; }
+.inboxTop {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  color: var(--text-secondary);
-  font-size: 0.875rem;
-  font-weight: 500;
+  margin-bottom: 2px;
 }
-
-.cardValue {
-  font-size: 2rem;
-  font-weight: 700;
+.inboxFrom {
+  font-size: 12px;
+  font-weight: 600;
   color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 130px;
+}
+.inboxTime { font-size: 10.5px; color: var(--text-muted); flex-shrink: 0; }
+.inboxSubject {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.inboxPreview {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 5px;
 }
 
-.cardTrend {
-  font-size: 0.875rem;
+/* ── Email panel ───────────────────────────────── */
+.emailPanelTitle {
   display: flex;
   align-items: center;
-  gap: 0.25rem;
+  gap: 8px;
 }
-
-.trendUp {
-  color: var(--accent-success);
+.emailThread {
+  padding: 16px;
+  border-bottom: 1px solid var(--border-light);
+  flex-shrink: 0;
 }
-
-.trendDown {
-  color: var(--accent-danger);
+.emailMeta {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 14px;
 }
+.emailMetaText { flex: 1; }
+.emailMetaTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  margin-bottom: 2px;
+}
+.emailTo { font-size: 11.5px; color: var(--text-muted); }
+.emailBody {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--text-primary);
+  margin-bottom: 14px;
+}
+.attachments {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.attachment {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--surface-bg);
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background var(--t);
+}
+.attachment:hover { background: #e8edf5; }
+.attachIcon { font-size: 22px; }
+.attachName { font-size: 12px; font-weight: 500; color: var(--text-primary); }
+.attachSize { font-size: 10.5px; color: var(--text-muted); }
 
-.trendNeutral {
-  color: var(--accent-warning);
+/* ── AI Reply ──────────────────────────────────── */
+.aiReply {
+  padding: 16px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.aiReplyHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.aiReplyTitle {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--voltus-blue);
+}
+.regenerateBtn {
+  font-size: 12px;
+  color: var(--voltus-blue);
+  background: var(--ai-bg);
+  border: 1px solid #bfdbfe;
+  border-radius: 6px;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: all var(--t);
+}
+.regenerateBtn:hover { background: #dbeafe; }
+.aiReplyBody {
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--text-primary);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+}
+.aiReplyActions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  padding-top: 4px;
+  border-top: 1px solid var(--border-light);
+}
+.actionBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  background: var(--surface-bg);
+  border: 1px solid var(--border-light);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all var(--t);
+}
+.actionBtn:hover { background: #e8edf5; }
+.actionBtnPrimary {
+  background: var(--voltus-blue);
+  color: #fff;
+  border-color: var(--voltus-blue);
+  margin-left: auto;
+}
+.actionBtnPrimary:hover { background: #1d4ed8; }
+
+/* ── Document panel ────────────────────────────── */
+.docTabs {
+  display: flex;
+  border-bottom: 1px solid var(--border-light);
+  padding: 0 12px;
+  flex-shrink: 0;
+}
+.docTab {
+  padding: 12px 10px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all var(--t);
+  margin-bottom: -1px;
+  background: none;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+}
+.docTab:hover { color: var(--text-primary); }
+.docTabActive {
+  color: var(--voltus-blue) !important;
+  border-bottom-color: var(--voltus-blue) !important;
+}
+.docFile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border-light);
+  flex-shrink: 0;
+}
+.docFileInfo { flex: 1; }
+.docFileName { font-size: 12.5px; font-weight: 500; color: var(--text-primary); }
+.processedBadge {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--green);
+  white-space: nowrap;
+}
+.sectionLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  padding: 10px 14px 6px;
+  flex-shrink: 0;
+}
+.keyInfoTable {
+  padding: 0 14px;
+  flex-shrink: 0;
+}
+.keyInfoRow {
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  gap: 8px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border-light);
+  font-size: 12px;
+  align-items: start;
+}
+.keyInfoLabel { color: var(--text-muted); }
+.keyInfoValue { color: var(--text-primary); font-weight: 500; }
+.keyInfoList {
+  list-style: disc;
+  padding-left: 14px;
+  color: var(--text-primary);
+  font-weight: 500;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.confidenceRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+.confidenceBar {
+  flex: 1;
+  height: 6px;
+  background: var(--border-light);
+  border-radius: 100px;
+  overflow: hidden;
+}
+.confidenceFill {
+  height: 100%;
+  background: linear-gradient(90deg, #10b981, #34d399);
+  border-radius: 100px;
+}
+.confidenceNum { color: var(--text-primary); font-weight: 600; }
+
+/* Approval card */
+.approvalCard {
+  margin: 10px 12px 12px;
+  background: var(--surface-bg);
+  border: 1px solid var(--border-light);
+  border-radius: 10px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.approvalHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.approvalTitle { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+.approvalText { font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
+.approveBtn {
+  width: 100%;
+  padding: 10px;
+  background: var(--voltus-blue);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--t);
+}
+.approveBtn:hover { background: #1d4ed8; }
+.approvalNote {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  text-align: center;
 }

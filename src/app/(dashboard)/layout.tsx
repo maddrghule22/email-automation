@@ -12,12 +12,23 @@ export default function DashboardLayout({
       <Sidebar />
       <div className={styles.main}>
         <header className={styles.header}>
-          <div className={styles.userProfile}>
-            <span>John Doe</span>
-            <div className={styles.avatar}>JD</div>
+          <div className={styles.headerGreeting}>
+            <h1>Good Morning, Yash 👋</h1>
+            <p>Here&apos;s what&apos;s happening with your email automation today.</p>
+          </div>
+          <div className={styles.headerRight}>
+            <div className={styles.searchBar}>
+              <span className={styles.searchIcon}>🔍</span>
+              <input type="text" placeholder="Search emails, documents, or actions..." />
+            </div>
+            <button className={styles.headerBtn}>
+              🔔
+              <span className={styles.notifDot} />
+            </button>
+            <div className={styles.avatar}>YS</div>
           </div>
         </header>
-        <main style={{ padding: '2rem' }}>
+        <main className={styles.content}>
           {children}
         </main>
       </div>
