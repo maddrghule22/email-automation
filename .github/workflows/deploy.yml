@@ -52,8 +52,8 @@ jobs:
       - name: Prisma Generate
         run: npx prisma generate
 
-      - name: Build for Cloudflare Pages
-        run: npm run pages:build
+      - name: Build Next.js app
+        run: npm run build
         env:
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
@@ -63,6 +63,17 @@ jobs:
           GMAIL_CLIENT_SECRET: ${{ secrets.GMAIL_CLIENT_SECRET }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           NEXT_PHASE: "phase-production-build"
+
+      - name: Build for Cloudflare Pages (next-on-pages)
+        run: npx @cloudflare/next-on-pages
+        env:
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          NEXT_PUBLIC_APP_URL: ${{ secrets.NEXT_PUBLIC_APP_URL }}
+          GMAIL_CLIENT_ID: ${{ secrets.GMAIL_CLIENT_ID }}
+          GMAIL_CLIENT_SECRET: ${{ secrets.GMAIL_CLIENT_SECRET }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3

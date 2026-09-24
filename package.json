@@ -15,8 +15,8 @@
         "prisma:seed": "prisma db seed",
         "db:reset": "prisma migrate reset",
         "postinstall": "prisma generate",
-        "pages:build": "npx @cloudflare/next-on-pages",
-        "pages:deploy": "npm run pages:build && wrangler pages deploy"
+        "pages:build": "next build",
+        "pages:deploy": "next build && wrangler pages deploy out --project-name=email-automation"
     },
     "prisma": {
         "seed": "npx tsx prisma/seed.ts"

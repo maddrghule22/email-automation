@@ -5,7 +5,7 @@ import { jwtVerify } from 'jose';
 // Edge runtime uses process.env directly — matches config.ts dev fallback
 const secret = new TextEncoder().encode(process.env.JWT_SECRET || 'dev-only-insecure-secret-min-32-chars-long');
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const requestHeaders = new Headers(request.headers);
   const requestId = crypto.randomUUID();
   requestHeaders.set('x-request-id', requestId);
