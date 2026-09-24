@@ -154,7 +154,7 @@ export default function DashboardOverview() {
               <p>Hi,</p>
               <p>Thank you for sharing the project requirements. We have reviewed the document and are excited to move forward.</p>
               <p>Our team will prepare a detailed proposal along with the estimated timeline and share it with you shortly. If you have any specific questions or additional requirements, please let us know.</p>
-              <p>Best regards,<br />Voltus Technologies</p>
+              <p>Best regards,<br />Vorynex Technologies</p>
             </div>
             <div className={styles.aiReplyActions}>
               <button className={`${styles.actionBtn}`}>✏ Edit</button>

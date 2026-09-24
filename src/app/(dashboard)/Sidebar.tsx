@@ -41,7 +41,7 @@ export default function Sidebar() {
           </svg>
         </div>
         <div>
-          <div className={styles.logoName}>Voltus</div>
+          <div className={styles.logoName}>Vorynex</div>
           <div className={styles.logoSub}>Automation Platform</div>
         </div>
       </div>
@@ -67,7 +67,7 @@ export default function Sidebar() {
       <div className={styles.promoCard}>
         <div className={styles.promoBadge}>✦</div>
         <p className={styles.promoTitle}>Smarter Emails.<br />Faster Business.</p>
-        <p className={styles.promoSub}>Voltus Automation Platform reads, understands, and responds — so you don't have to.</p>
+        <p className={styles.promoSub}>Vorynex Automation Platform reads, understands, and responds — so you don't have to.</p>
       </div>
 
       {/* Bottom nav + user */}

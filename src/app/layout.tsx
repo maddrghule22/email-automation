@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import '../styles/globals.css';
 
 export const metadata: Metadata = {
-  title: 'Voltus – Automation Platform',
-  description: 'Voltus AI-Powered Email & Document Automation Platform',
+  title: 'Vorynex – Automation Platform',
+  description: 'Vorynex AI-Powered Email & Document Automation Platform',
 };
 
 export default function RootLayout({
