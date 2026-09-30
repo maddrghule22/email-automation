@@ -75,7 +75,7 @@ export default function ExceptionInboxPage() {
                     {new Date(exc.dueAt).toLocaleString()}
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <Link href={`/operations/exceptions/${exc.id}`} className="text-blue-600 hover:text-blue-900 font-medium text-sm">
+                    <Link href={`/exceptions/${exc.id}`} className="text-blue-600 hover:text-blue-900 font-medium text-sm">
                       Triage
                     </Link>
                   </td>

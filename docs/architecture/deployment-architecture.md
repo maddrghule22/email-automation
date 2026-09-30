@@ -8,7 +8,7 @@ When the application moves beyond the foundational stage, the deployment archite
 
 - **Containerization**: The Next.js application, along with any future background workers, will be containerized using **Docker**.
 - **CI/CD Pipeline**: Automated pipelines (e.g., GitHub Actions) will handle testing, building, and deploying the Docker images.
-- **Hosting**: The application will be deployed to a scalable cloud provider (e.g., Vercel for the Next.js frontend/API, and AWS/GCP for managed databases and Redis).
+- **Hosting**: The application will be deployed to **Cloudflare Pages** (via Wrangler) for the Next.js frontend/API, and AWS/GCP for managed databases and Redis.
 - **Database**: Managed PostgreSQL instance.
 - **Caching & Queues**: Managed Redis instance for session storage, caching, and backing the BullMQ job queues.
 

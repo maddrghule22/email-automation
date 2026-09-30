@@ -1,8 +1,8 @@
 # Enterprise Operations Runbook
 
 ## Deployment
-Use GitHub Actions to promote the main branch to Vercel Production. The pipeline automatically applies 
-px prisma db push equivalent safely via Prisma Migrate.
+Use GitHub Actions to promote the main branch to Cloudflare Pages Production via Wrangler. The pipeline automatically applies 
+Prisma migrations and executes test suites before deploying.
 
 ## Queue Recovery
 If a worker gets stuck in an infinite retry loop:

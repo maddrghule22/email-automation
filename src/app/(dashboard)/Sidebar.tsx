@@ -8,7 +8,7 @@ const NAV_ITEMS = [
   { name: 'Dashboard',           href: '/overview',              icon: '⊞' },
   { name: 'Email Automation',    href: '/workflows',             icon: '✉' },
   { name: 'Document Processing', href: '/documents',             icon: '📄' },
-  { name: 'Approvals',           href: '/operations/exceptions', icon: '✓' },
+  { name: 'Approvals',           href: '/exceptions',            icon: '✓' },
   { name: 'Sent Emails',         href: '/integrations',          icon: '↑' },
   { name: 'Templates',           href: '/support',               icon: '⊡' },
 ];

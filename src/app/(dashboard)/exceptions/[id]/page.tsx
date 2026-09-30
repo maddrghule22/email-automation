@@ -1,5 +1,4 @@
 'use client';
-export const runtime = 'edge';
 
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
@@ -23,7 +22,7 @@ export default function ExceptionWorkspacePage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'RESOLVE', resolutionCode: action, resolutionSummary: 'Handled via Workspace UI' })
     });
-    router.push('/operations/exceptions');
+    router.push('/exceptions');
   };
 
   if (!exc) return <div className="p-8">Loading Workspace...</div>;

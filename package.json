@@ -4,7 +4,7 @@
     "private": true,
     "scripts": {
         "dev": "next dev",
-        "build": "prisma generate && next build",
+        "build": "prisma generate && next build --webpack",
         "start": "next start",
         "lint": "eslint",
         "test": "vitest run",
@@ -15,8 +15,9 @@
         "prisma:seed": "prisma db seed",
         "db:reset": "prisma migrate reset",
         "postinstall": "prisma generate",
-        "pages:build": "next build",
-        "pages:deploy": "next build && wrangler pages deploy out --project-name=email-automation"
+        "pages:build": "npm run build && npx @cloudflare/next-on-pages",
+        "pages:deploy": "wrangler pages deploy .vercel/output/static --project-name=email-automation",
+        "deploy": "npm run pages:deploy"
     },
     "prisma": {
         "seed": "npx tsx prisma/seed.ts"
