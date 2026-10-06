@@ -9,3 +9,5 @@ node_modules
 .env.production.local
 dist
 coverage
+.vercel
+.env*.local
