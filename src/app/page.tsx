@@ -18,7 +18,6 @@ export default function HomePage() {
             </svg>
           </div>
           <span className={styles.logoText}>Vorynex</span>
-          <span className={styles.logoTag}>Cloudflare Edge</span>
         </Link>
 
         <nav className={styles.navLinks}>
@@ -45,11 +44,6 @@ export default function HomePage() {
 
       {/* ── Hero Section ───────────────────────────────────── */}
       <section className={styles.hero}>
-        <div className={styles.pillBadge}>
-          <span className={styles.pillBadgeDot} />
-          <span>Stage 42 Certified Release • Enterprise AI Copilot</span>
-        </div>
-
         <h1 className={styles.heroTitle}>
           Autonomous Operations for <br />
           <span className={styles.heroGradientText}>Modern Enterprise Supply Chains</span>
@@ -164,7 +158,6 @@ export default function HomePage() {
             <p className={styles.featureDesc}>
               State-of-the-art vision models extract multi-line tabular invoices, purchase orders, and bill of ladings with sub-pixel field coordinates.
             </p>
-            <span className={styles.featureBadge}>Sub-second extraction</span>
           </div>
 
           {/* Card 2 */}
@@ -181,7 +174,6 @@ export default function HomePage() {
             <p className={styles.featureDesc}>
               Drag-and-drop orchestration engine for complex financial approvals, multi-tier matching rules, and conditional webhooks.
             </p>
-            <span className={styles.featureBadge}>Event-driven Engine</span>
           </div>
 
           {/* Card 3 */}
@@ -196,7 +188,6 @@ export default function HomePage() {
             <p className={styles.featureDesc}>
               Identifies line-item price mismatches, missing tax IDs, and duplicate submissions. Automatically calculates SLA deadlines and risk scores.
             </p>
-            <span className={styles.featureBadge}>Automated SLA tracking</span>
           </div>
 
           {/* Card 4 */}
@@ -213,7 +204,6 @@ export default function HomePage() {
             <p className={styles.featureDesc}>
               Pre-built bi-directional connectors for SAP ERP, Microsoft 365, Gmail Workspace, SFTP servers, and generic REST endpoints.
             </p>
-            <span className={styles.featureBadge}>OAuth2 + AES-256</span>
           </div>
 
           {/* Card 5 */}
@@ -231,7 +221,6 @@ export default function HomePage() {
             <p className={styles.featureDesc}>
               Query transactions, verify suppliers, and investigate disputed invoices in plain natural language with deep operational memory.
             </p>
-            <span className={styles.featureBadge}>Multi-turn Context</span>
           </div>
 
           {/* Card 6 */}
@@ -247,7 +236,6 @@ export default function HomePage() {
             <p className={styles.featureDesc}>
               Globally distributed execution across 300+ edge data centers. Ultra-low latency response times with bank-grade encryption and DDoS protection.
             </p>
-            <span className={styles.featureBadge}>99.99% Availability</span>
           </div>
         </div>
       </section>
