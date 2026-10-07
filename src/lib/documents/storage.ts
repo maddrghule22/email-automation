@@ -1,6 +1,3 @@
-import crypto from 'crypto';
-import path from 'path';
-
 /**
  * Storage Abstraction for Document Processing
  * In a real environment, this delegates to AWS S3, GCS, or Azure Blob.
@@ -15,7 +12,8 @@ export class DocumentStorage {
     const allowedMime = ['application/pdf', 'image/jpeg', 'image/png', 'image/tiff', 'text/plain', 'message/rfc822'];
     if (!allowedMime.includes(fileInfo.mimeType)) throw new Error(`Unsupported file type: ${fileInfo.mimeType}`);
 
-    const ext = path.extname(fileInfo.name).toLowerCase();
+    const lastDot = fileInfo.name.lastIndexOf('.');
+    const ext = lastDot !== -1 ? fileInfo.name.slice(lastDot).toLowerCase() : '';
     if (!['.pdf', '.jpg', '.jpeg', '.png', '.tiff', '.txt', '.eml'].includes(ext) && ext !== '') {
       throw new Error(`Unsupported file extension: ${ext}`);
     }
@@ -26,7 +24,8 @@ export class DocumentStorage {
    * Returns the storage reference (key) and the content hash.
    */
   static async upload(tenantId: string, buffer: Buffer, mimeType: string): Promise<{ key: string, hash: string }> {
-    const hash = crypto.createHash('sha256').update(buffer).digest('hex');
+    const hashBuffer = await crypto.subtle.digest('SHA-256', new Uint8Array(buffer));
+    const hash = Array.from(new Uint8Array(hashBuffer), b => b.toString(16).padStart(2, '0')).join('');
     const key = `tenants/${tenantId}/docs/${hash}_${Date.now()}`;
     
     // Simulating object storage upload...

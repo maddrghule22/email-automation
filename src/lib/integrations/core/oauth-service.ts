@@ -1,5 +1,4 @@
 import db from '@/lib/db';
-import { randomBytes } from 'crypto';
 import { ProviderRegistry } from '../provider-registry';
 import { IntegrationService } from './integration-service';
 
@@ -17,7 +16,9 @@ export class OAuthService {
       throw new Error(`Provider ${providerId} missing getAuthorizationUrl implementation`);
     }
 
-    const state = randomBytes(32).toString('hex');
+    const stateBytes = new Uint8Array(32);
+    crypto.getRandomValues(stateBytes);
+    const state = Array.from(stateBytes, b => b.toString(16).padStart(2, '0')).join('');
     
     // Store OAuth state to prevent CSRF
     await db.oAuthSession.create({

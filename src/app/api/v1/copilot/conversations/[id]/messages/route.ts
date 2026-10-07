@@ -1,3 +1,4 @@
+export const runtime = 'edge';
 import { NextResponse } from 'next/server';
 import { CopilotEngine } from '@/lib/ai/copilot/engine';
 import { successResponse, errorResponse } from '@/lib/api-response';

@@ -1,8 +1,7 @@
 import db from '@/lib/db';
 import { logger } from '@/lib/logger';
 import { eventBus } from '@/lib/events/event-bus';
-import { randomUUID } from 'crypto';
-import crypto from 'crypto';
+
 
 interface IngestionPayload {
   tenantId: string;
@@ -51,9 +50,10 @@ export class IngestionService {
     let contentHash = null;
     if (fileBuffer) {
       // Generate checksum for duplicate detection
-      contentHash = crypto.createHash('sha256').update(fileBuffer).digest('hex');
+      const hashBuffer = await crypto.subtle.digest('SHA-256', new Uint8Array(fileBuffer));
+      contentHash = Array.from(new Uint8Array(hashBuffer), b => b.toString(16).padStart(2, '0')).join('');
       // e.g. upload to S3
-      fileReference = `tenant-${tenantId}/ingestions/${randomUUID()}-${originalFilename || 'unnamed'}`;
+      fileReference = `tenant-${tenantId}/ingestions/${crypto.randomUUID()}-${originalFilename || 'unnamed'}`;
     }
 
     // 4. Create Ingestion Record
@@ -68,7 +68,7 @@ export class IngestionService {
           fileReference,
           idempotencyKey,
           status: 'QUEUED',
-          correlationId: randomUUID(),
+          correlationId: crypto.randomUUID(),
         }
       });
 
@@ -108,7 +108,7 @@ export class IngestionService {
 
     // 7. Emit Domain Event
     await eventBus.publish({
-      eventId: randomUUID(),
+      eventId: crypto.randomUUID(),
       eventType: 'DataIngested',
       aggregateType: 'IngestionRecord',
       aggregateId: record.id,

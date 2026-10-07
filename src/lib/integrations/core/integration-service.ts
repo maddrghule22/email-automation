@@ -3,7 +3,7 @@ import { logger } from '@/lib/logger';
 import { ProviderRegistry } from '../provider-registry';
 import { CryptoService } from '../crypto';
 import { Integration, IntegrationCredential, IntegrationEvent, Prisma } from '@prisma/client';
-import { randomUUID } from 'crypto';
+
 
 export class IntegrationService {
   static async createIntegration(tenantId: string, providerId: string, name: string): Promise<Integration> {

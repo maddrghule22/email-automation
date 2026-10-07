@@ -4,7 +4,6 @@ import { ProviderRegistry } from '@/lib/integrations/provider-registry';
 import { CryptoService } from '@/lib/integrations/crypto';
 import { CredentialPayload } from '@/lib/integrations/types';
 import { NotFoundError, ValidationError } from '@/lib/errors';
-import crypto from 'crypto';
 import { auditService } from '@/lib/audit';
 
 export class IntegrationService {
@@ -21,8 +20,10 @@ export class IntegrationService {
       throw new ValidationError(`Provider ${providerId} does not support OAuth`);
     }
 
-    // Generate cryptographically strong state
-    const state = crypto.randomBytes(32).toString('hex');
+    // Generate cryptographically strong state using Web Crypto API
+    const stateBytes = new Uint8Array(32);
+    crypto.getRandomValues(stateBytes);
+    const state = Array.from(stateBytes, b => b.toString(16).padStart(2, '0')).join('');
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
 
     // Store state

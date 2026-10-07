@@ -1,6 +1,6 @@
 import db from '@/lib/db';
 import { logger } from '@/lib/logger';
-import crypto from 'crypto';
+
 
 export class OutboundWebhookService {
   /**
@@ -72,9 +72,20 @@ export class OutboundWebhookService {
       };
 
       if (webhook.signingSecret) {
-        const signature = crypto.createHmac('sha256', webhook.signingSecret)
-                                .update(`${timestamp}.${body}`)
-                                .digest('hex');
+        const enc = new TextEncoder();
+        const key = await crypto.subtle.importKey(
+          'raw',
+          enc.encode(webhook.signingSecret),
+          { name: 'HMAC', hash: 'SHA-256' },
+          false,
+          ['sign']
+        );
+        const sigBuf = await crypto.subtle.sign(
+          'HMAC',
+          key,
+          enc.encode(`${timestamp}.${body}`)
+        );
+        const signature = Array.from(new Uint8Array(sigBuf), b => b.toString(16).padStart(2, '0')).join('');
         headers['X-Vorynex-Signature'] = `t=${timestamp},v1=${signature}`;
       }
 

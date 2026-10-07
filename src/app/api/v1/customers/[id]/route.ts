@@ -1,3 +1,4 @@
+export const runtime = 'edge';
 import { NextResponse } from 'next/server';
 import { AuthorizationService } from '@/lib/auth/authorization';
 import db from '@/lib/db';

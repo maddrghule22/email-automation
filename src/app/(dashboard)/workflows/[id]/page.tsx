@@ -1,5 +1,6 @@
 'use client';
-// Removed export const runtime = 'edge' since this is a client component anyway, and we removed edge runtimes.
+
+export const runtime = 'edge';
 
 import React, { useEffect, useState, use } from 'react';
 import styles from './builder.module.css';
