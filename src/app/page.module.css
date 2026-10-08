@@ -241,7 +241,7 @@
   padding: 12px 20px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 16px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
@@ -264,28 +264,10 @@
   font-size: 0.8rem;
   color: #94a3b8;
   font-family: monospace;
-}
-
-.previewBadge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.72rem;
-  background: rgba(16, 185, 129, 0.15);
-  color: #34d399;
-  border: 1px solid rgba(16, 185, 129, 0.3);
-  padding: 2px 8px;
-  border-radius: 100px;
-  font-weight: 600;
-}
-
-.statusDotLive {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #10b981;
-  box-shadow: 0 0 8px #10b981;
-  animation: pulseDot 1.8s infinite ease-in-out;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 3px 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .previewImageContainer {
@@ -575,25 +557,6 @@
 .footerCopyright {
   font-size: 0.85rem;
   color: #64748b;
-}
-
-.statusIndicator {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.78rem;
-  color: #34d399;
-  background: rgba(16, 185, 129, 0.1);
-  padding: 4px 12px;
-  border-radius: 100px;
-  border: 1px solid rgba(16, 185, 129, 0.25);
-}
-
-.statusDot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #10b981;
 }
 
 .footerLinks {

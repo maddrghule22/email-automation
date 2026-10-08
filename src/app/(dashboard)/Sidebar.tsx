@@ -137,13 +137,6 @@ export default function Sidebar() {
         })}
       </nav>
 
-      {/* Promo card */}
-      <div className={styles.promoCard}>
-        <div className={styles.promoBadge}>✦</div>
-        <p className={styles.promoTitle}>Smarter Emails.<br />Faster Business.</p>
-        <p className={styles.promoSub}>Vorynex Automation Platform reads, understands, and responds — so you don't have to.</p>
-      </div>
-
       {/* Bottom nav + user */}
       <div className={styles.sidebarBottom}>
         {BOTTOM_ITEMS.map((item) => (

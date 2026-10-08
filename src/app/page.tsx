@@ -80,10 +80,6 @@ export default function HomePage() {
                 <span className={`${styles.winDot} ${styles.winGreen}`} />
               </div>
               <div className={styles.previewTitle}>vorynex-pipeline-runtime.cloudflare-edge.live</div>
-              <div className={styles.previewBadge}>
-                <span className={styles.statusDotLive} />
-                LIVE STREAMING
-              </div>
             </div>
 
             {/* High-Resolution Platform Visualizer Image */}
@@ -267,10 +263,6 @@ export default function HomePage() {
             <span className={styles.footerCopyright}>
               &copy; 2026 Vorynex Technologies, Inc. All rights reserved.
             </span>
-            <div className={styles.statusIndicator}>
-              <span className={styles.statusDot} />
-              <span>All Systems Operational</span>
-            </div>
           </div>
 
           <div className={styles.footerLinks}>

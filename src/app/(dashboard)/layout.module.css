@@ -85,32 +85,6 @@
   opacity: 0.85;
 }
 
-/* Promo card */
-.promoCard {
-  margin: 0 8px 8px;
-  background: rgba(37, 99, 235, 0.15);
-  border: 1px solid rgba(37, 99, 235, 0.25);
-  border-radius: 12px;
-  padding: 14px 12px;
-}
-.promoBadge {
-  font-size: 18px;
-  color: var(--voltus-blue-bright);
-  margin-bottom: 8px;
-}
-.promoTitle {
-  font-size: 13px;
-  font-weight: 700;
-  color: #fff;
-  line-height: 1.4;
-  margin-bottom: 6px;
-}
-.promoSub {
-  font-size: 11px;
-  color: var(--text-sidebar);
-  line-height: 1.5;
-}
-
 /* Bottom nav + user */
 .sidebarBottom {
   padding: 0 8px 4px;
