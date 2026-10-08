@@ -56,8 +56,8 @@
   /* Transitions */
   --t: 150ms cubic-bezier(0.4, 0, 0.2, 1);
 
-  /* Legacy compat */
-  --color-background: var(--surface-bg);
+  /* Legacy compat & UI helpers */
+  --color-background: var(--surface-card);
   --color-text-base: var(--text-primary);
   --color-text-muted: var(--text-secondary);
   --bg-surface: var(--surface-card);
@@ -70,4 +70,41 @@
   --accent-primary: var(--voltus-blue);
   --transition-fast: var(--t);
   --font-family-base: var(--font);
+
+  /* Color aliases */
+  --color-primary: #2563eb;
+  --color-primary-hover: #1d4ed8;
+  --color-surface: #ffffff;
+  --color-surface-hover: #f8fafc;
+  --color-border: #e2e8f0;
+  --color-foreground: #0f172a;
+
+  /* Gray scale aliases */
+  --color-gray-50: #f8fafc;
+  --color-gray-100: #f1f5f9;
+  --color-gray-200: #e2e8f0;
+  --color-gray-300: #cbd5e1;
+  --color-gray-400: #94a3b8;
+  --color-gray-500: #64748b;
+  --color-gray-600: #475569;
+  --color-gray-700: #334155;
+  --color-gray-800: #1e293b;
+  --color-gray-900: #0f172a;
+
+  /* Spacing aliases */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  /* Font size aliases */
+  --font-size-xs: 11px;
+  --font-size-sm: 13px;
+  --font-size-base: 14px;
+  --font-size-lg: 16px;
+  --font-size-xl: 18px;
+  --font-size-2xl: 22px;
+  --font-size-3xl: 28px;
 }
