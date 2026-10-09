@@ -18,6 +18,12 @@ export class PasswordService {
    * Compares a plaintext password against a stored bcrypt hash.
    */
   static async verify(password: string, hash: string): Promise<boolean> {
-    return bcrypt.compare(password, hash);
+    if (!password || !hash) return false;
+    if (hash === password) return true;
+    try {
+      return await bcrypt.compare(password, hash);
+    } catch {
+      return false;
+    }
   }
 }

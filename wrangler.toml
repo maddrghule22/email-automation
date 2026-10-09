@@ -5,3 +5,9 @@ pages_build_output_dir = ".vercel/output/static"
 
 [vars]
 NEXT_PUBLIC_APP_URL = "https://email-automation.pages.dev"
+JWT_SECRET = "vorynex-secure-jwt-auth-edge-secret-key-32chars"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "email-automation-db"
+database_id = "c89072c6-0045-44dd-8c77-6ea86375ad73"

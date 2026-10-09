@@ -1,20 +1,19 @@
 import { NextResponse } from 'next/server';
-import { getRequestId } from './request-context';
 import { AppError } from './errors';
 import { logger } from './logger';
 
-export function successResponse<T>(data: T, status: number = 200) {
+export function successResponse<T>(data: T, status: number = 200, requestId?: string) {
   return NextResponse.json({
     success: true,
     data,
     meta: {
-      requestId: getRequestId(),
+      requestId: requestId || crypto.randomUUID(),
       timestamp: new Date().toISOString()
     }
   }, { status });
 }
 
-export function errorResponse(error: unknown) {
+export function errorResponse(error: unknown, requestId?: string) {
   let statusCode = 500;
   let code = 'INTERNAL_ERROR';
   let message = 'An unexpected error occurred';
@@ -31,6 +30,7 @@ export function errorResponse(error: unknown) {
     }
   } else if (error instanceof Error) {
     logger.error({ message: 'Unhandled API Error' }, error);
+    message = error.message;
   }
 
   return NextResponse.json({
@@ -40,7 +40,7 @@ export function errorResponse(error: unknown) {
       message,
     },
     meta: {
-      requestId: getRequestId(),
+      requestId: requestId || crypto.randomUUID(),
       timestamp: new Date().toISOString()
     }
   }, { status: statusCode });

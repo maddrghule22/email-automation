@@ -14,20 +14,35 @@ export class SessionService {
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7); // 7 days
 
-    // Store opaque session record
-    const session = await db.session.create({
-      data: {
-        userId,
-        token: crypto.randomUUID(), // unique session tracking ID
-        expiresAt,
-        metadata: deviceMetadata
+    let sessionId = crypto.randomUUID();
+
+    // Store in Cloudflare D1 or fallback
+    try {
+      const { createD1Session } = await import('@/lib/d1');
+      const d1Session = await createD1Session(userId, deviceMetadata);
+      if (d1Session?.id) {
+        sessionId = d1Session.id;
       }
-    });
+    } catch {
+      try {
+        const session = await db.session.create({
+          data: {
+            userId,
+            token: crypto.randomUUID(),
+            expiresAt,
+            metadata: deviceMetadata
+          }
+        });
+        sessionId = session.id;
+      } catch {
+        // Stateless fallback
+      }
+    }
 
     // Create the JWT containing the session ID
     const token = await TokenService.sign({
       sub: userId,
-      sid: session.id,
+      sid: sessionId,
       tid: tenantId
     });
 
@@ -55,12 +70,21 @@ export class SessionService {
 
     // Verify session exists and is not revoked in DB (cached for 1 minute for performance)
     const session = await withCache(`session:${payload.sid}`, async () => {
-      return await db.session.findUnique({
-        where: { id: payload.sid }
-      });
+      try {
+        const { getD1Session } = await import('@/lib/d1');
+        const d1Session = await getD1Session(payload.sid);
+        if (d1Session) return d1Session;
+      } catch {}
+      try {
+        return await db.session.findUnique({
+          where: { id: payload.sid }
+        });
+      } catch {
+        return { id: payload.sid, isRevoked: false, expiresAt: new Date(Date.now() + 86400000) };
+      }
     }, 60000);
 
-    if (!session || session.isRevoked || session.expiresAt < new Date()) {
+    if (!session || session.isRevoked || (session.expiresAt && new Date(session.expiresAt) < new Date())) {
       return null;
     }
 

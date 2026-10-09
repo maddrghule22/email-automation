@@ -1,12 +1,11 @@
 export const runtime = 'edge';
 import { NextResponse } from 'next/server';
-import db from '@/lib/db';
 import { PasswordService } from '@/lib/auth/password';
-import { SessionService } from '@/lib/auth/session';
-import { auditService } from '@/lib/audit';
+import { TokenService } from '@/lib/auth/token';
 import { successResponse, errorResponse } from '@/lib/api-response';
 import { AuthenticationError } from '@/lib/errors';
 import { applyRateLimit } from '@/lib/security/api-rate-limit';
+import { findUserByEmailFromD1, logD1Audit, createD1Session } from '@/lib/d1';
 
 export async function POST(request: Request) {
   try {
@@ -18,16 +17,14 @@ export async function POST(request: Request) {
     const { email, password, tenantId } = body;
 
     if (!email || !password) {
-      throw new AuthenticationError('Invalid credentials'); // General message to prevent enum
+      throw new AuthenticationError('Invalid credentials');
     }
 
-    const user = await db.user.findUnique({
-      where: { email },
-      include: { memberships: true }
-    });
+    // 1. Query Cloudflare D1 database for user
+    const user = await findUserByEmailFromD1(email);
 
     if (!user || user.status !== 'ACTIVE' || !user.passwordHash) {
-      await auditService.log({
+      await logD1Audit({
         actorType: 'SYSTEM',
         actorId: 'system',
         action: 'login.failed',
@@ -38,10 +35,11 @@ export async function POST(request: Request) {
       throw new AuthenticationError('Invalid credentials');
     }
 
+    // 2. Verify password
     const isValid = await PasswordService.verify(password, user.passwordHash);
 
     if (!isValid) {
-      await auditService.log({
+      await logD1Audit({
         actorType: 'USER',
         actorId: user.id,
         action: 'login.failed',
@@ -52,36 +50,55 @@ export async function POST(request: Request) {
       throw new AuthenticationError('Invalid credentials');
     }
 
-    // Default tenant selection if user belongs to multiple and one isn't specified
+    // 3. Resolve tenant
     let selectedTenantId = tenantId;
-    if (!selectedTenantId && user.memberships.length > 0) {
-      // Pick first active membership
-      const activeMembership = user.memberships.find(m => m.status === 'Active');
+    const memberships = user.memberships || [];
+    if (!selectedTenantId && memberships.length > 0) {
+      const activeMembership = memberships.find((m: any) => m.status === 'Active');
       if (activeMembership) {
         selectedTenantId = activeMembership.tenantId;
       }
     }
 
-    // Create DB-backed session & set cookies
-    await SessionService.createSession(user.id, selectedTenantId, {
+    // 4. Create session in D1
+    const { id: sessionId } = await createD1Session(user.id, {
       userAgent: request.headers.get('user-agent'),
     });
 
-    await auditService.log({
+    // 5. Sign JWT session token
+    const token = await TokenService.sign({
+      sub: user.id,
+      sid: sessionId,
+      tid: selectedTenantId,
+    });
+
+    // 6. Audit success
+    await logD1Audit({
       actorType: 'USER',
       actorId: user.id,
       action: 'login.success',
       resourceType: 'user',
       resourceId: user.id,
-      tenantId: selectedTenantId
+      tenantId: selectedTenantId,
     });
 
-    return successResponse({
+    // 7. Form response and set secure session cookie
+    const response = successResponse({
       id: user.id,
       email: user.email,
       name: user.name,
-      tenantId: selectedTenantId
+      tenantId: selectedTenantId,
     });
+
+    response.cookies.set('sid', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+    });
+
+    return response;
   } catch (error) {
     return errorResponse(error);
   }
