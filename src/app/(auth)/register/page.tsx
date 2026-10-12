@@ -32,7 +32,7 @@ export default function RegisterPage() {
         throw new Error(data.error?.message || 'Failed to register');
       }
 
-      router.push('/support'); // Redirect directly to support (session is active)
+      router.push('/overview'); // Redirect directly to overview dashboard
     } catch (err: any) {
       setError(err.message);
       setLoading(false);
@@ -43,7 +43,20 @@ export default function RegisterPage() {
     <>
       <h1 className={styles.title}>Create Enterprise Account</h1>
       
-      {error && <div style={{ color: 'red', marginBottom: '1rem', textAlign: 'center' }}>{error}</div>}
+      {error && (
+        <div style={{
+          backgroundColor: '#fee2e2',
+          border: '1px solid #fecaca',
+          color: '#b91c1c',
+          padding: '10px 14px',
+          borderRadius: '8px',
+          fontSize: '13px',
+          marginBottom: '1rem',
+          textAlign: 'center'
+        }}>
+          {error}
+        </div>
+      )}
 
       <form className={styles.form} onSubmit={handleRegister}>
         <div className={styles.inputGroup}>
@@ -62,12 +75,27 @@ export default function RegisterPage() {
         </div>
         
         <div className={styles.inputGroup}>
-          <label htmlFor="password">Password</label>
+          <label htmlFor="password">Password (min 8 chars, 1 number, 1 symbol)</label>
           <input type="password" id="password" name="password" placeholder="••••••••" required />
         </div>
         
-        <button type="submit" className={`btn btn-primary ${styles.btnFull}`} disabled={loading} style={{ backgroundColor: '#0f172a', color: 'white', padding: '0.75rem', borderRadius: '4px', border: 'none', fontWeight: 'bold', cursor: 'pointer', marginTop: '1rem' }}>
-          {loading ? 'Setting up Workspace...' : 'Create Account'}
+        <button 
+          type="submit" 
+          disabled={loading} 
+          style={{ 
+            backgroundColor: '#2563eb', 
+            color: 'white', 
+            padding: '0.75rem', 
+            borderRadius: '8px', 
+            border: 'none', 
+            fontWeight: 600, 
+            cursor: 'pointer', 
+            marginTop: '1rem',
+            width: '100%',
+            transition: 'background 0.2s'
+          }}
+        >
+          {loading ? 'Creating Workspace...' : 'Create Account'}
         </button>
       </form>
       

@@ -1,11 +1,10 @@
 export const runtime = 'edge';
 import { NextResponse } from 'next/server';
-import db from '@/lib/db';
 import { PasswordService } from '@/lib/auth/password';
-import { SessionService } from '@/lib/auth/session';
-import { auditService } from '@/lib/audit';
+import { TokenService } from '@/lib/auth/token';
 import { successResponse, errorResponse } from '@/lib/api-response';
 import { ValidationError } from '@/lib/errors';
+import { findUserByEmailFromD1, registerD1User, createD1Session, logD1Audit } from '@/lib/d1';
 
 export async function POST(request: Request) {
   try {
@@ -36,71 +35,63 @@ export async function POST(request: Request) {
       throw new ValidationError('Password cannot contain your email prefix');
     }
 
-    // Check if user already exists
-    const existing = await db.user.findUnique({ where: { email } });
+    // 1. Check if user already exists in D1
+    const existing = await findUserByEmailFromD1(email);
     if (existing) {
-      throw new ValidationError('Email is already registered'); // In a public SaaS, we might obscure this
+      throw new ValidationError('Email is already registered');
     }
 
+    // 2. Hash password
     const passwordHash = await PasswordService.hash(password);
 
-    // Create user, tenant, and membership in one transaction
-    const result = await db.$transaction(async (tx) => {
-      // 1. Create User
-      const user = await tx.user.create({
-        data: { email, name, passwordHash, status: 'ACTIVE' }
-      });
-
-      // 2. Create Tenant
-      const slug = organizationName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-      const tenant = await tx.tenant.create({
-        data: { name: organizationName, slug, status: 'Active' }
-      });
-
-      // 3. Ensure Admin Role exists
-      let adminRole = await tx.role.findFirst({
-        where: { name: 'Admin', isSystem: true }
-      });
-      
-      if (!adminRole) {
-        adminRole = await tx.role.create({
-          data: { name: 'Admin', isSystem: true }
-        });
-      }
-
-      // 4. Create Membership
-      await tx.membership.create({
-        data: {
-          userId: user.id,
-          tenantId: tenant.id,
-          roleId: adminRole.id,
-          status: 'Active'
-        }
-      });
-
-      return { user, tenant };
+    // 3. Register user and organization in D1
+    const { userId, tenantId } = await registerD1User({
+      email,
+      name,
+      passwordHash,
+      organizationName,
     });
 
-    // Create DB-backed session & set cookies
-    await SessionService.createSession(result.user.id, result.tenant.id, {
+    // 4. Create session in D1
+    const { id: sessionId } = await createD1Session(userId, {
       userAgent: request.headers.get('user-agent'),
     });
 
-    await auditService.log({
-      actorType: 'USER',
-      actorId: result.user.id,
-      action: 'user.registered',
-      resourceType: 'user',
-      resourceId: result.user.id,
-      tenantId: result.tenant.id
+    // 5. Sign JWT session token
+    const token = await TokenService.sign({
+      sub: userId,
+      sid: sessionId,
+      tid: tenantId,
     });
 
-    return successResponse({
-      id: result.user.id,
-      email: result.user.email,
-      name: result.user.name,
-      tenantId: result.tenant.id
+    // 6. Audit log in D1
+    await logD1Audit({
+      actorType: 'USER',
+      actorId: userId,
+      action: 'user.registered',
+      resourceType: 'user',
+      resourceId: userId,
+      tenantId: tenantId,
+      metadata: { organizationName }
     });
+
+    // 7. Form response and set secure session cookie
+    const response = successResponse({
+      id: userId,
+      email: email.toLowerCase(),
+      name,
+      tenantId,
+    }, 201);
+
+    response.cookies.set('sid', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+    });
+
+    return response;
   } catch (error) {
     return errorResponse(error);
   }

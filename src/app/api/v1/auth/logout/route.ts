@@ -21,7 +21,9 @@ export async function POST(request: Request) {
       await SessionService.destroySession();
     }
 
-    return successResponse({ success: true });
+    const response = successResponse({ success: true });
+    response.cookies.delete('sid');
+    return response;
   } catch (error) {
     return errorResponse(error);
   }

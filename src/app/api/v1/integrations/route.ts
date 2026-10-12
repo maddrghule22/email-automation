@@ -10,10 +10,20 @@ export async function GET(request: Request) {
     await AuthorizationService.authorize('integrations', 'read');
     const { tenant } = await AuthorizationService.resolveContext();
 
-    const dbIntegrations = await db.integration.findMany({
-      where: { tenantId: tenant!.id },
-      orderBy: { createdAt: 'desc' },
-    });
+    let dbIntegrations: any[] = [];
+    try {
+      const { getD1Integrations } = await import('@/lib/d1');
+      dbIntegrations = await getD1Integrations(tenant!.id);
+    } catch {
+      try {
+        dbIntegrations = await db.integration.findMany({
+          where: { tenantId: tenant!.id },
+          orderBy: { createdAt: 'desc' },
+        });
+      } catch {
+        dbIntegrations = [];
+      }
+    }
 
     // Provide the combined catalog (available + connected)
     const availableProviders = ProviderRegistry.list().map(c => c.metadata);

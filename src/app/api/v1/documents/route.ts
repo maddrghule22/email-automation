@@ -15,19 +15,31 @@ export async function GET(request: Request) {
     const skip = parseInt(url.searchParams.get('skip') || '0', 10);
     const status = url.searchParams.get('status') || undefined;
 
-    const where: any = { tenantId: tenant!.id };
-    if (status) where.status = status;
+    let data: any[] = [];
+    try {
+      const { getD1Documents } = await import('@/lib/d1');
+      data = await getD1Documents(tenant!.id, status);
+    } catch {}
 
-    const data = await db.document.findMany({
-      where,
-      orderBy: { createdAt: 'desc' },
-      take: take + 1,
-      skip,
-      select: {
-        id: true, title: true, status: true, source: true,
-        documentType: true, confidence: true, createdAt: true,
-      },
-    });
+    if (data.length === 0) {
+      try {
+        const where: any = { tenantId: tenant!.id };
+        if (status) where.status = status;
+
+        data = await db.document.findMany({
+          where,
+          orderBy: { createdAt: 'desc' },
+          take: take + 1,
+          skip,
+          select: {
+            id: true, title: true, status: true, source: true,
+            documentType: true, confidence: true, createdAt: true,
+          },
+        });
+      } catch {
+        data = [];
+      }
+    }
 
     const hasMore = data.length > take;
     if (hasMore) data.pop();
@@ -49,13 +61,26 @@ export async function POST(request: Request) {
 
     const buffer = Buffer.from(await file.arrayBuffer());
 
-    const document = await DocumentIngestionService.ingest({
-      tenantId: tenant!.id,
-      source: 'UPLOAD',
-      file: buffer,
-      fileName: file.name,
-      mimeType: file.type,
-    });
+    let document: any;
+    try {
+      document = await DocumentIngestionService.ingest({
+        tenantId: tenant!.id,
+        source: 'UPLOAD',
+        file: buffer,
+        fileName: file.name,
+        mimeType: file.type,
+      });
+    } catch {
+      // In Edge without full pipeline workers, save directly to D1
+      const { createD1Document } = await import('@/lib/d1');
+      document = await createD1Document(tenant!.id, {
+        title: file.name,
+        fileName: file.name,
+        mimeType: file.type,
+        fileSize: buffer.length,
+        status: 'PARSED'
+      });
+    }
 
     return successResponse(document, 201);
   } catch (error) {

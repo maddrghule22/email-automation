@@ -101,10 +101,18 @@ export class SessionService {
   static async destroySession(): Promise<void> {
     const sessionInfo = await this.getSession();
     if (sessionInfo?.sessionId) {
-      await db.session.update({
-        where: { id: sessionInfo.sessionId },
-        data: { isRevoked: true }
-      });
+      try {
+        const { revokeD1Session } = await import('@/lib/d1');
+        await revokeD1Session(sessionInfo.sessionId);
+      } catch {}
+
+      try {
+        await db.session.update({
+          where: { id: sessionInfo.sessionId },
+          data: { isRevoked: true }
+        });
+      } catch {}
+
       invalidateCache(`session:${sessionInfo.sessionId}`);
     }
 

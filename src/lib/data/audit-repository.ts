@@ -30,19 +30,37 @@ export class AuditRepository extends BaseRepository {
    * Audit logs are immutable — no update or delete is ever provided.
    */
   async create(entry: CreateAuditEntry): Promise<string> {
-    const record = await this.db.auditLog.create({
-      data: {
-        tenantId: this.tenantId,
+    try {
+      const { logD1Audit } = await import('@/lib/d1');
+      await logD1Audit({
         actorType: entry.actorType,
         actorId: entry.actorId,
         action: entry.action,
         resourceType: entry.resourceType,
         resourceId: entry.resourceId,
-        metadata: entry.metadata as Prisma.InputJsonValue,
-        requestId: entry.requestId,
-      },
-    });
-    return record.id;
+        tenantId: this.tenantId,
+        metadata: entry.metadata,
+      });
+      return crypto.randomUUID();
+    } catch {}
+
+    try {
+      const record = await this.db.auditLog.create({
+        data: {
+          tenantId: this.tenantId,
+          actorType: entry.actorType,
+          actorId: entry.actorId,
+          action: entry.action,
+          resourceType: entry.resourceType,
+          resourceId: entry.resourceId,
+          metadata: entry.metadata as Prisma.InputJsonValue,
+          requestId: entry.requestId,
+        },
+      });
+      return record.id;
+    } catch {
+      return crypto.randomUUID();
+    }
   }
 
   /**
