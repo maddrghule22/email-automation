@@ -21,6 +21,7 @@ export default function HomePage() {
         </Link>
 
         <nav className={styles.navLinks}>
+          <Link href="/inbox" className={styles.navLink} style={{ color: '#ec4899', fontWeight: 600 }}>MailHive UI</Link>
           <Link href="/documents" className={styles.navLink}>Document AI</Link>
           <Link href="/workflows" className={styles.navLink}>Workflows</Link>
           <Link href="/exceptions" className={styles.navLink}>Exceptions</Link>
@@ -29,6 +30,9 @@ export default function HomePage() {
         </nav>
 
         <div className={styles.headerActions}>
+          <Link href="/inbox" className={styles.signInLink} style={{ color: '#ec4899', fontWeight: 600 }}>
+            MailHive
+          </Link>
           <Link href="/login" className={styles.signInLink}>
             Sign In
           </Link>
@@ -54,15 +58,15 @@ export default function HomePage() {
         </p>
 
         <div className={styles.heroActions}>
-          <Link href="/register" className={styles.btnPrimary}>
-            Start Free Workspace
+          <Link href="/inbox" className={styles.btnPrimary} style={{ background: 'linear-gradient(135deg, #c026d3 0%, #db2777 100%)', boxShadow: '0 8px 24px rgba(219, 39, 119, 0.4)' }}>
+            Launch MailHive UI
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <line x1="5" y1="12" x2="19" y2="12" />
               <polyline points="12 5 19 12 12 19" />
             </svg>
           </Link>
-          <Link href="/login" className={styles.btnSecondary}>
-            Enter Demo Environment
+          <Link href="/overview" className={styles.btnSecondary}>
+            Enter Dashboard
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="7" y1="17" x2="17" y2="7" />
               <polyline points="7 7 17 7 17 17" />
