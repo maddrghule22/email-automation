@@ -10,4 +10,4 @@ JWT_SECRET = "vorynex-secure-jwt-auth-edge-secret-key-32chars"
 [[d1_databases]]
 binding = "DB"
 database_name = "email-automation-db"
-database_id = "c89072c6-0045-44dd-8c77-6ea86375ad73"
+database_id = "41dd373a-67ef-4358-b20c-e7189e794862"
