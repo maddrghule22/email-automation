@@ -441,3 +441,346 @@
   line-height: 1.5;
   text-align: center;
 }
+
+/* ── Interactive Enhancements ───────────────────── */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.spinning {
+  animation: spin 0.75s linear infinite;
+  display: inline-block;
+}
+
+/* Options dropdown menu */
+.menuWrapper {
+  position: relative;
+}
+.menuDropdown {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  background: #ffffff;
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  box-shadow: 0 10px 25px -5px rgba(0,0,0,0.12), 0 8px 10px -6px rgba(0,0,0,0.08);
+  min-width: 175px;
+  z-index: 50;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  animation: popoverFadeIn 0.15s ease-out;
+}
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 10px;
+  font-size: 12.5px;
+  color: var(--text-primary);
+  background: none;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: left;
+  transition: background var(--t);
+}
+.menuItem:hover {
+  background: #f1f5f9;
+}
+.menuItemDanger {
+  color: #ef4444;
+}
+.menuItemDanger:hover {
+  background: #fef2f2;
+}
+
+/* Edit AI Reply */
+.editReplyArea {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+.editReplyTextarea {
+  width: 100%;
+  min-height: 130px;
+  padding: 10px 12px;
+  border: 1.5px solid var(--voltus-blue);
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.55;
+  font-family: inherit;
+  color: var(--text-primary);
+  background: #fff;
+  resize: vertical;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+.editActions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+.saveBtn {
+  background: var(--voltus-blue);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--t);
+}
+.saveBtn:hover {
+  background: #1d4ed8;
+}
+.cancelBtn {
+  background: var(--surface-bg);
+  border: 1px solid var(--border-light);
+  color: var(--text-secondary);
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.cancelBtn:hover {
+  background: #e2e8f0;
+}
+
+/* Template Selector Modal */
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.modalCard {
+  background: #ffffff;
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  width: 100%;
+  max-width: 480px;
+  box-shadow: 0 20px 25px -5px rgba(0,0,0,0.25);
+  overflow: hidden;
+  animation: popoverFadeIn 0.2s ease-out;
+}
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border-light);
+  background: #f8fafc;
+}
+.modalTitle {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.closeModalBtn {
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 2px 6px;
+}
+.closeModalBtn:hover {
+  color: var(--text-primary);
+}
+.modalBody {
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 380px;
+  overflow-y: auto;
+}
+.templateOption {
+  padding: 12px 14px;
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  background: var(--surface-bg);
+  cursor: pointer;
+  transition: all var(--t);
+  text-align: left;
+}
+.templateOption:hover {
+  border-color: var(--voltus-blue);
+  background: #eff6ff;
+}
+.templateName {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--voltus-blue);
+  margin-bottom: 4px;
+}
+.templateSnippet {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+/* Approval Flow Timeline */
+.flowContainer {
+  padding: 16px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  overflow-y: auto;
+  flex: 1;
+}
+.flowStep {
+  display: flex;
+  gap: 12px;
+  position: relative;
+}
+.flowStep:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 13px;
+  top: 28px;
+  bottom: -12px;
+  width: 2px;
+  background: var(--border-light);
+}
+.stepCheck {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+  z-index: 1;
+}
+.stepCompleted {
+  background: #ecfdf5;
+  color: #10b981;
+  border: 1.5px solid #10b981;
+}
+.stepPending {
+  background: #fffbeb;
+  color: #f59e0b;
+  border: 1.5px solid #f59e0b;
+}
+.stepUpcoming {
+  background: #f1f5f9;
+  color: #94a3b8;
+  border: 1.5px solid #cbd5e1;
+}
+.stepContent {
+  flex: 1;
+  min-width: 0;
+}
+.stepTitleRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2px;
+}
+.stepTitle {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.stepTime {
+  font-size: 10.5px;
+  color: var(--text-muted);
+}
+.stepDesc {
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+/* Approved State Card */
+.approvedStateCard {
+  margin: 10px 12px 12px;
+  background: #ecfdf5;
+  border: 1.5px solid #a7f3d0;
+  border-radius: 10px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+  text-align: center;
+}
+.approvedBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #047857;
+  font-size: 13px;
+  font-weight: 700;
+}
+.approvedSub {
+  font-size: 11.5px;
+  color: #065f46;
+  line-height: 1.4;
+}
+.undoApprovalBtn {
+  margin-top: 6px;
+  background: #ffffff;
+  border: 1px solid #10b981;
+  border-radius: 6px;
+  color: #065f46;
+  font-size: 11.5px;
+  padding: 4px 12px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all var(--t);
+}
+.undoApprovalBtn:hover {
+  background: #d1fae5;
+}
+
+/* Floating Toast Notification */
+.toastContainer {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 250;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+.toast {
+  pointer-events: auto;
+  background: #0f172a;
+  color: #f8fafc;
+  padding: 12px 18px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: 0 14px 30px -4px rgba(15, 23, 42, 0.35);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid #334155;
+  animation: toastSlideUp 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes toastSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+

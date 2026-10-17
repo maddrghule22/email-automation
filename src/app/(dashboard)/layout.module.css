@@ -213,6 +213,126 @@
   cursor: pointer;
 }
 
+/* Popover dropdowns */
+.relativeWrap {
+  position: relative;
+}
+.popoverMenu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: #ffffff;
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  box-shadow: 0 14px 30px -4px rgba(15, 23, 42, 0.15), 0 6px 12px -3px rgba(15, 23, 42, 0.08);
+  width: 320px;
+  z-index: 100;
+  overflow: hidden;
+  animation: popoverFadeIn 0.15s ease-out;
+}
+@keyframes popoverFadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.popoverHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-light);
+  background: #f8fafc;
+}
+.popoverTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.popoverAction {
+  font-size: 11.5px;
+  color: var(--voltus-blue);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+}
+.popoverAction:hover {
+  text-decoration: underline;
+}
+.popoverList {
+  max-height: 280px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+.popoverItem {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border-light);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  transition: background var(--t);
+  text-align: left;
+  background: none;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+  cursor: pointer;
+  width: 100%;
+}
+.popoverItem:last-child {
+  border-bottom: none;
+}
+.popoverItem:hover {
+  background: #f1f5f9;
+}
+.popoverItemText {
+  font-size: 12.5px;
+  color: var(--text-primary);
+  font-weight: 500;
+  line-height: 1.4;
+}
+.popoverItemTime {
+  font-size: 10.5px;
+  color: var(--text-muted);
+}
+.userMenu {
+  width: 220px;
+  padding: 6px;
+}
+.userMenuItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  color: var(--text-primary);
+  text-decoration: none;
+  transition: background var(--t);
+  cursor: pointer;
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+}
+.userMenuItem:hover {
+  background: #f1f5f9;
+}
+.userMenuHeader {
+  padding: 10px 12px 8px;
+  border-bottom: 1px solid var(--border-light);
+  margin-bottom: 4px;
+}
+.userName {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.userEmail {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
 /* ── Page content ──────────────────────────────── */
 .content {
   flex: 1;
