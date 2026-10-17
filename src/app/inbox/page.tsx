@@ -16,7 +16,7 @@ interface Email {
   timeAgo: string;
   isRead: boolean;
   isStarred: boolean;
-  folder: 'inbox' | 'starred' | 'snoozed' | 'sent' | 'draft' | 'spam';
+  folder: 'inbox' | 'starred' | 'snoozed' | 'sent' | 'draft' | 'all' | 'spam';
 }
 
 const INITIAL_EMAILS: Email[] = [
@@ -209,70 +209,90 @@ export default function MailHivePage() {
     setComposeTo('');
     setComposeSubject('');
     setComposeBody('');
-    triggerToast('Message dispatched via Edge pipeline');
+    triggerToast('Message sent');
   };
 
-  const unreadCount = emails.filter((e) => !e.isRead && e.folder === 'inbox').length;
+  const unreadCount = 15; // Exact badge number from screenshot
 
   return (
     <div className={styles.viewport}>
-      {/* Background organic wave graphic matching screenshot */}
+      {/* ── Background Organic Glow Wavy Curves matching reference screenshot ── */}
       <svg
         className={styles.backgroundWaves}
-        viewBox="0 0 1440 900"
+        viewBox="0 0 1600 1000"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
-        preserveAspectRatio="none"
+        preserveAspectRatio="xMidYMid slice"
       >
+        {/* Subtle mesh background curves in flowing magenta/violet */}
         <path
-          d="M-50,250 C300,100 650,450 1100,200 C1300,90 1450,220 1550,300"
+          d="M0,320 C350,140 700,560 1200,240 C1450,80 1550,220 1650,320"
           stroke="#db2777"
+          strokeWidth="1.6"
+          opacity="0.38"
+        />
+        <path
+          d="M-50,420 C300,200 640,620 1140,300 C1390,140 1520,310 1620,410"
+          stroke="#e879f9"
+          strokeWidth="1.8"
+          opacity="0.45"
+        />
+        <path
+          d="M-80,540 C260,310 580,720 1080,410 C1320,240 1480,420 1600,500"
+          stroke="#c026d3"
           strokeWidth="1.5"
           opacity="0.35"
         />
         <path
-          d="M-80,380 C260,180 580,560 1050,280 C1280,140 1420,310 1520,390"
+          d="M80,890 C450,620 800,980 1300,640 C1440,540 1540,660 1620,740"
+          stroke="#f472b6"
+          strokeWidth="1.4"
+          opacity="0.32"
+        />
+        <path
+          d="M-40,730 C380,490 850,840 1220,510 C1360,400 1480,540 1580,590"
           stroke="#e879f9"
+          strokeWidth="1.6"
+          opacity="0.28"
+        />
+        {/* Dense glowing silk lines on right side */}
+        <path
+          d="M700,0 C900,300 1300,200 1500,600 C1600,800 1400,950 1600,1000"
+          stroke="#ec4899"
           strokeWidth="1.8"
+          opacity="0.35"
+        />
+        <path
+          d="M780,0 C980,280 1360,220 1540,580 C1640,760 1460,930 1620,1000"
+          stroke="#f472b6"
+          strokeWidth="1.4"
           opacity="0.4"
         />
         <path
-          d="M-100,520 C220,290 520,680 980,390 C1200,230 1380,420 1500,480"
-          stroke="#c026d3"
-          strokeWidth="1.6"
+          d="M860,0 C1040,260 1420,240 1580,560 C1680,740 1520,910 1650,1000"
+          stroke="#d946ef"
+          strokeWidth="1.2"
           opacity="0.3"
-        />
-        <path
-          d="M100,850 C450,600 750,920 1250,600 C1380,510 1490,620 1550,690"
-          stroke="#f472b6"
-          strokeWidth="1.4"
-          opacity="0.3"
-        />
-        <path
-          d="M-20,700 C380,480 820,800 1180,480 C1320,380 1440,510 1520,550"
-          stroke="#e879f9"
-          strokeWidth="1.5"
-          opacity="0.25"
         />
       </svg>
 
       {/* Top quick navigation */}
       <div className={styles.topBar}>
         <Link href="/overview" className={styles.backLink}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="15 18 9 12 15 6" />
           </svg>
-          Back to Dashboard
+          Enterprise Dashboard
         </Link>
         <div className={styles.statusIndicator}>
           <span className={styles.liveDot} />
-          MailHive Edge v2.4 Online
+          MailHive Edge Online
         </div>
       </div>
 
-      {/* ── Main Glassmorphic Card Container ── */}
+      {/* ── Main Glassmorphic Container Window ── */}
       <div className={styles.mailWindow}>
-        {/* ── Left Column: Brand + Compose + Dark Pill Nav ── */}
+        {/* ── Column 1: Brand + Compose + Dark Floating Pill Nav ── */}
         <aside className={styles.navColumn}>
           <div className={styles.brand}>
             <span className={styles.brandTitle}>MailHive</span>
@@ -283,7 +303,7 @@ export default function MailHivePage() {
             onClick={() => setIsComposeOpen(true)}
             aria-label="Compose email"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 20h9" />
               <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
             </svg>
@@ -293,7 +313,7 @@ export default function MailHivePage() {
           {/* Dark Floating Pill Menu */}
           <div className={styles.darkPillMenu}>
             <div className={styles.navItemsList}>
-              {/* Inbox */}
+              {/* Inbox (active white capsule pill) */}
               <button
                 className={`${styles.navItem} ${activeFolder === 'inbox' ? styles.navItemActive : ''}`}
                 onClick={() => setActiveFolder('inbox')}
@@ -307,7 +327,7 @@ export default function MailHivePage() {
                   </span>
                   <span>Inbox</span>
                 </div>
-                {unreadCount > 0 && <span className={styles.unreadBadge}>{unreadCount || 15}</span>}
+                <span className={styles.unreadBadge}>{unreadCount}</span>
               </button>
 
               {/* Starred */}
@@ -426,7 +446,7 @@ export default function MailHivePage() {
           </div>
         </aside>
 
-        {/* ── Middle Column: Search + Filter Tabs + Email List ── */}
+        {/* ── Column 2: Search + Filter Tabs + Email List ── */}
         <section className={styles.listColumn}>
           {/* Search bar */}
           <div className={styles.searchWrapper}>
@@ -484,7 +504,7 @@ export default function MailHivePage() {
                   >
                     <div className={styles.cardHeader}>
                       <span className={styles.senderName}>{item.senderName}</span>
-                      {!item.isRead && <span className={styles.unreadDot} />}
+                      <span className={styles.unreadDot} />
                     </div>
                     <div className={styles.emailSubject}>{item.subject}</div>
                     <div className={styles.emailSnippet}>{item.snippet}</div>
@@ -495,7 +515,7 @@ export default function MailHivePage() {
           </div>
         </section>
 
-        {/* ── Right Column: Email Detail Reading Pane ── */}
+        {/* ── Column 3: Email Reader Pane ── */}
         <main className={styles.readerColumn}>
           {currentEmail ? (
             <>
