@@ -1,861 +1,1103 @@
-/* ── MailHive Glassmorphic Email Interface ── */
+/* ── MailHive Enterprise Inbox Professional Stylesheet ──────────────── */
 
 .viewport {
-  position: relative;
-  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
   width: 100vw;
-  background-color: #21032d;
-  background: radial-gradient(circle at 15% 25%, #3d0546 0%, #20032b 55%, #15021c 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 32px 24px;
-  overflow-x: hidden;
+  overflow: hidden;
+  background-color: #0b0f19;
+  color: #f1f5f9;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  color: #1e293b;
-  box-sizing: border-box;
+  user-select: none;
 }
 
-/* Wavy abstract decorative lines matching screenshot */
-.backgroundWaves {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 1;
-  opacity: 0.55;
-  mix-blend-mode: screen;
-}
-
-/* Top corner quick nav bar */
+/* ── Top Unified App Bar ────────────────────────────────────────────── */
 .topBar {
-  position: absolute;
-  top: 16px;
-  left: 28px;
-  right: 28px;
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
+  height: 48px;
+  padding: 0 16px;
+  background-color: #0f172a;
+  border-bottom: 1px solid #1e293b;
+  flex-shrink: 0;
   z-index: 10;
+}
+
+.topBarLeft {
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
 
 .backLink {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  color: rgba(255, 255, 255, 0.85);
   font-size: 13px;
   font-weight: 500;
+  color: #94a3b8;
   text-decoration: none;
-  background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(8px);
-  padding: 6px 14px;
-  border-radius: 9999px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  transition: all 0.2s ease;
+  padding: 6px 10px;
+  border-radius: 6px;
+  transition: all 0.15s ease;
 }
 
 .backLink:hover {
-  background: rgba(255, 255, 255, 0.18);
-  color: #ffffff;
-  transform: translateX(-2px);
+  color: #f8fafc;
+  background-color: #1e293b;
 }
 
-.statusIndicator {
+.appBrand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #f8fafc;
+  letter-spacing: -0.2px;
+}
+
+.appBrandIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  background-color: #2563eb;
+  color: #fff;
+}
+
+.topBarRight {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.automationBtn {
   display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #38bdf8;
+  background-color: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.automationBtn:hover {
+  background-color: rgba(56, 189, 248, 0.18);
+  border-color: rgba(56, 189, 248, 0.4);
+}
+
+.userBadge {
+  display: flex;
   align-items: center;
   gap: 8px;
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.7);
-  background: rgba(0, 0, 0, 0.25);
-  padding: 6px 14px;
-  border-radius: 9999px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+}
+
+.userAvatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background-color: #3b82f6;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* ── 3-Column Email Client Main Grid ────────────────────────────────── */
+.mailGrid {
+  display: flex;
+  flex: 1;
+  height: calc(100vh - 48px);
+  overflow: hidden;
+  background-color: #0b0f19;
+}
+
+/* ── Column 1: Folder Navigation Sidebar ────────────────────────────── */
+.navSidebar {
+  width: 220px;
+  min-width: 220px;
+  background-color: #0d1322;
+  border-right: 1px solid #1e293b;
+  display: flex;
+  flex-direction: column;
+  padding: 14px 10px;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+.composeActionBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 14px;
+  background-color: #2563eb;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.composeActionBtn:hover {
+  background-color: #1d4ed8;
+}
+
+.navSectionTitle {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #64748b;
+  padding: 8px 10px 4px;
+}
+
+.navGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 14px;
+}
+
+.navFolderItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 8px 10px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  text-align: left;
+}
+
+.navFolderItem:hover {
+  background-color: #162032;
+  color: #f1f5f9;
+}
+
+.navFolderItemActive {
+  background-color: #1e293b;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.navFolderLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.folderCountBadge {
+  font-size: 11px;
+  font-weight: 600;
+  color: #94a3b8;
+  padding: 1px 6px;
+  border-radius: 10px;
+  background-color: #1e293b;
+}
+
+.folderCountBadgeActive {
+  background-color: #2563eb;
+  color: #ffffff;
+}
+
+.navSidebarFooter {
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid #1e293b;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.statusIndicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: #64748b;
+  padding: 0 4px;
 }
 
 .liveDot {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #10b981;
-  box-shadow: 0 0 8px #10b981;
+  background-color: #10b981;
 }
 
-/* ── Main Glassmorphic Container ── */
-.mailWindow {
-  position: relative;
-  z-index: 5;
-  width: 100%;
-  max-width: 1260px;
-  height: 780px;
-  background: rgba(246, 238, 248, 0.84);
-  backdrop-filter: blur(32px) saturate(170%);
-  -webkit-backdrop-filter: blur(32px) saturate(170%);
-  border-radius: 28px;
-  border: 2px solid rgba(255, 255, 255, 0.65);
-  box-shadow: 
-    0 30px 70px -15px rgba(18, 1, 26, 0.75),
-    0 0 0 1px rgba(255, 255, 255, 0.3) inset;
-  display: grid;
-  grid-template-columns: 185px 335px 1fr;
+/* ── Column 2: Message List ─────────────────────────────────────────── */
+.listColumn {
+  width: 360px;
+  min-width: 320px;
+  background-color: #0b0f19;
+  border-right: 1px solid #1e293b;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
-  transition: box-shadow 0.3s ease;
-}
-
-/* ── Column 1: Left Nav & Compose ── */
-.navColumn {
-  display: flex;
-  flex-direction: column;
-  padding: 24px 16px 20px 22px;
-  border-right: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 22px;
-  padding-left: 2px;
-}
-
-.brandTitle {
-  font-size: 23px;
-  font-weight: 800;
-  letter-spacing: -0.5px;
-  color: #0c1326;
-  user-select: none;
-}
-
-/* Compose pill button */
-.composeBtn {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  height: 46px;
-  padding: 0 16px;
-  border-radius: 12px;
-  background-color: #0d1527;
-  color: #ffffff;
-  border: none;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  box-shadow: 0 4px 14px rgba(13, 21, 39, 0.35);
-  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
-  margin-bottom: 20px;
-}
-
-.composeBtn:hover {
-  background-color: #17243f;
-  transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(13, 21, 39, 0.45);
-}
-
-.composeBtn:active {
-  transform: translateY(1px);
-}
-
-/* Dark Floating Pill Menu */
-.darkPillMenu {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  background: #191e28;
-  border-radius: 20px;
-  padding: 10px 8px;
-  box-shadow: 
-    0 8px 24px rgba(0, 0, 0, 0.22),
-    0 0 0 1px rgba(255, 255, 255, 0.06) inset;
-}
-
-.navItemsList {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  flex: 1;
-}
-
-.navItem {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  padding: 9px 12px;
-  border-radius: 10px;
-  background: transparent;
-  border: none;
-  color: #8c95a6;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  text-align: left;
-}
-
-.navItemContent {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.navItemIcon {
-  width: 17px;
-  height: 17px;
-  stroke: currentColor;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   flex-shrink: 0;
 }
 
-.navItem:hover {
-  color: #ffffff;
-  background: rgba(255, 255, 255, 0.06);
-}
-
-/* Active Nav Item - Pill white highlight */
-.navItemActive {
-  background: #ffffff !important;
-  color: #0c1326 !important;
-  font-weight: 600;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-}
-
-.navItemActive .navItemIcon {
-  color: #0c1326;
-}
-
-.unreadBadge {
-  background: #0d1527;
-  color: #ffffff;
-  font-size: 11px;
-  font-weight: 700;
-  padding: 2px 7px;
-  border-radius: 9999px;
-  min-width: 19px;
-  text-align: center;
-}
-
-.settingsWrapper {
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  padding-top: 8px;
-  margin-top: 6px;
-}
-
-/* ── Column 2: Search & Email List ── */
-.listColumn {
+.listHeader {
+  padding: 12px 14px 10px;
+  border-bottom: 1px solid #1e293b;
+  background-color: #0d1322;
   display: flex;
   flex-direction: column;
-  padding: 24px 18px 20px 18px;
-  border-right: 1px solid rgba(0, 0, 0, 0.08);
-  background: rgba(255, 255, 255, 0.1);
-  overflow: hidden;
+  gap: 10px;
 }
 
-/* Search bar */
-.searchWrapper {
+.searchBox {
   position: relative;
+  display: flex;
+  align-items: center;
   width: 100%;
-  margin-bottom: 12px;
 }
 
 .searchIcon {
   position: absolute;
-  left: 14px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #8e95a5;
+  left: 10px;
+  color: #64748b;
   pointer-events: none;
 }
 
 .searchInput {
   width: 100%;
-  height: 38px;
-  padding: 0 14px 0 38px;
-  border-radius: 9999px;
-  background: #ffffff;
-  border: 1px solid rgba(0, 0, 0, 0.06);
+  height: 34px;
+  padding: 0 30px 0 32px;
+  background-color: #162032;
+  border: 1px solid #273549;
+  border-radius: 6px;
+  color: #f1f5f9;
   font-size: 13px;
-  color: #1e293b;
   outline: none;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
-  transition: all 0.2s ease;
-  box-sizing: border-box;
-}
-
-.searchInput::placeholder {
-  color: #94a3b8;
+  transition: border-color 0.15s ease;
 }
 
 .searchInput:focus {
-  border-color: #cbd5e1;
-  box-shadow: 0 0 0 3px rgba(13, 21, 39, 0.06);
+  border-color: #3b82f6;
+  background-color: #192438;
 }
 
-/* Filter segmented pill tabs */
-.filterPills {
-  display: flex;
-  align-items: center;
-  background: #ffffff;
-  border-radius: 9999px;
-  padding: 3px;
-  margin-bottom: 18px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
-  border: 1px solid rgba(0, 0, 0, 0.04);
+.searchInput::placeholder {
+  color: #64748b;
 }
 
-.filterBtn {
-  flex: 1;
+.searchClearBtn {
+  position: absolute;
+  right: 8px;
+  background: none;
   border: none;
-  background: transparent;
-  padding: 5px 0;
-  border-radius: 9999px;
-  font-size: 11.5px;
-  font-weight: 500;
   color: #64748b;
   cursor: pointer;
-  transition: all 0.15s ease;
-  text-align: center;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.filterBtn:hover {
-  color: #0f172a;
+.searchClearBtn:hover {
+  color: #cbd5e1;
 }
 
-.filterBtnActive {
-  background: #171c26;
-  color: #ffffff !important;
+.controlsBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.filterTabs {
+  display: flex;
+  align-items: center;
+  background-color: #162032;
+  padding: 2px;
+  border-radius: 6px;
+  border: 1px solid #1e293b;
+}
+
+.filterTabBtn {
+  background: none;
+  border: none;
+  font-size: 11px;
+  font-weight: 500;
+  color: #94a3b8;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.filterTabBtn:hover {
+  color: #f1f5f9;
+}
+
+.filterTabBtnActive {
+  background-color: #1e293b;
+  color: #ffffff;
   font-weight: 600;
 }
 
-/* Email list */
-.emailList {
+.sortSelect {
+  height: 26px;
+  padding: 0 6px;
+  background-color: #162032;
+  border: 1px solid #1e293b;
+  border-radius: 6px;
+  color: #94a3b8;
+  font-size: 11px;
+  outline: none;
+  cursor: pointer;
+}
+
+.sortSelect:focus {
+  border-color: #3b82f6;
+}
+
+/* Email cards list */
+.messagesContainer {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.messageItem {
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  overflow-y: auto;
-  padding-right: 2px;
-  flex: 1;
-}
-
-.emailList::-webkit-scrollbar {
-  width: 4px;
-}
-
-.emailList::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.12);
-  border-radius: 4px;
-}
-
-/* Individual Email Card */
-.emailCard {
-  border-radius: 14px;
-  padding: 13px 15px;
+  gap: 4px;
+  padding: 12px 14px;
+  border-bottom: 1px solid #162032;
   cursor: pointer;
-  transition: all 0.18s ease;
-  position: relative;
-  border: 1px solid transparent;
-  user-select: none;
+  transition: background-color 0.12s ease;
 }
 
-.emailCardDefault {
-  background: transparent;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-  border-radius: 8px;
+.messageItem:hover {
+  background-color: #111827;
 }
 
-.emailCardDefault:hover {
-  background: rgba(255, 255, 255, 0.55);
+.messageItemActive {
+  background-color: #172033;
+  border-left: 3px solid #2563eb;
 }
 
-/* Active elevated card matching screenshot */
-.emailCardSelected {
-  background: #ffffff;
-  border-radius: 14px;
-  box-shadow: 
-    0 10px 24px -4px rgba(15, 23, 42, 0.09),
-    0 2px 6px rgba(15, 23, 42, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.9);
-  transform: translateY(-1px);
+.messageItemUnread {
+  background-color: #0f182b;
 }
 
-.cardHeader {
+.messageRowTop {
   display: flex;
   align-items: center;
-  gap: 7px;
-  margin-bottom: 4px;
+  justify-content: space-between;
+  gap: 8px;
 }
 
-.senderName {
-  font-size: 13.5px;
-  font-weight: 700;
-  color: #0b1329;
-  letter-spacing: -0.2px;
+.senderWrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
 }
 
-.unreadDot {
-  width: 7px;
-  height: 7px;
+.unreadMarker {
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
-  background: #0f172a;
-  display: inline-block;
+  background-color: #3b82f6;
   flex-shrink: 0;
 }
 
-.emailSubject {
-  font-size: 12.5px;
-  font-weight: 600;
-  color: #1e293b;
-  margin-bottom: 4px;
-  line-height: 1.35;
+.senderText {
+  font-size: 13px;
+  font-weight: 500;
+  color: #cbd5e1;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.emailSnippet {
-  font-size: 11.5px;
+.senderTextUnread {
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.timestamp {
+  font-size: 11px;
   color: #64748b;
-  line-height: 1.45;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.subjectText {
+  font-size: 13px;
+  font-weight: 500;
+  color: #94a3b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.subjectTextUnread {
+  font-weight: 600;
+  color: #f1f5f9;
+}
+
+.snippetText {
+  font-size: 12px;
+  color: #64748b;
+  line-height: 1.4;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
-.emptyNotice {
-  text-align: center;
-  padding: 40px 10px;
-  color: #64748b;
-  font-size: 13px;
+.badgesRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
 }
 
-/* ── Column 3: Email Reader Pane ── */
+.tagBadge {
+  font-size: 10px;
+  font-weight: 500;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background-color: #1e293b;
+  color: #94a3b8;
+}
+
+.starBtn {
+  background: none;
+  border: none;
+  padding: 2px;
+  color: #475569;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: color 0.12s ease;
+}
+
+.starBtn:hover {
+  color: #fbbf24;
+}
+
+.starBtnActive {
+  color: #f59e0b;
+}
+
+.importantBadge {
+  display: inline-flex;
+  align-items: center;
+  color: #eab308;
+}
+
+/* ── Column 3: Message Reader Pane ──────────────────────────────────── */
 .readerColumn {
+  flex: 1;
+  background-color: #0b0f19;
   display: flex;
   flex-direction: column;
-  padding: 24px 32px 24px 32px;
   overflow-y: auto;
-  background: transparent;
+  position: relative;
 }
 
-.readerHeader {
+.readerActionBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px;
+  border-bottom: 1px solid #1e293b;
+  background-color: #0d1322;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+.actionGroup {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.readerToolBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background-color: #162032;
+  border: 1px solid #273549;
+  border-radius: 6px;
+  color: #cbd5e1;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.readerToolBtn:hover {
+  background-color: #1e293b;
+  color: #ffffff;
+}
+
+.readerToolBtnStarred {
+  color: #f59e0b;
+  border-color: rgba(245, 158, 11, 0.4);
+  background-color: rgba(245, 158, 11, 0.1);
+}
+
+.readerContent {
+  padding: 24px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.mailSubjectHeader {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 20px;
-  padding-bottom: 12px;
 }
 
-.subjectGroup {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.readerSubject {
-  font-size: 19px;
+.readerTitle {
+  font-size: 20px;
   font-weight: 700;
-  color: #0b1329;
   letter-spacing: -0.3px;
+  color: #f8fafc;
+  line-height: 1.3;
 }
 
-.inboxBadge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 10.5px;
+.folderIndicatorPill {
+  font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
-  color: #64748b;
-  background: rgba(0, 0, 0, 0.05);
-  padding: 2px 7px;
-  border-radius: 5px;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.readerActions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+  color: #38bdf8;
+  background-color: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  padding: 3px 8px;
+  border-radius: 4px;
   flex-shrink: 0;
 }
 
-.actionBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: transparent;
-  border: none;
-  font-size: 12px;
-  font-weight: 500;
-  color: #475569;
-  cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 6px;
-  transition: all 0.15s ease;
-}
-
-.actionBtn:hover {
-  background: rgba(0, 0, 0, 0.05);
-  color: #0f172a;
-}
-
-.actionBtnStarred {
-  color: #f59e0b;
-}
-
-/* Sender metadata row */
-.senderRow {
+.participantCard {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 24px;
+  padding: 12px 16px;
+  background-color: #101726;
+  border: 1px solid #1e293b;
+  border-radius: 8px;
 }
 
-.senderDetails {
+.participantDetails {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-.avatar {
-  width: 38px;
-  height: 38px;
+.senderImg {
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   object-fit: cover;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
-  flex-shrink: 0;
-  background: #e2e8f0;
-  border: 1.5px solid #ffffff;
+  border: 1px solid #334155;
 }
 
-.senderText {
+.participantNames {
   display: flex;
   flex-direction: column;
+  gap: 2px;
 }
 
-.senderNameEmail {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13.5px;
-  font-weight: 700;
-  color: #0b1329;
-}
-
-.senderEmail {
-  font-weight: 400;
-  color: #64748b;
-  font-size: 12px;
-}
-
-.recipientDetail {
-  font-size: 11px;
-  color: #8e95a5;
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  cursor: pointer;
-}
-
-.timestamp {
-  font-size: 11.5px;
-  color: #8e95a5;
-  white-space: nowrap;
-}
-
-/* Body Content */
-.emailBody {
-  flex: 1;
-  font-size: 13.5px;
-  line-height: 1.7;
-  color: #1e293b;
-  margin-bottom: 28px;
-  white-space: pre-line;
-}
-
-/* Footer reply/forward pills */
-.replyActions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: auto;
-}
-
-.pillActionBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  background: #ffffff;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.04);
-  padding: 7px 16px;
-  border-radius: 9999px;
-  font-size: 12.5px;
+.senderFullName {
+  font-size: 14px;
   font-weight: 600;
-  color: #0f172a;
-  cursor: pointer;
-  transition: all 0.15s ease;
+  color: #ffffff;
 }
 
-.pillActionBtn:hover {
-  background: #f8fafc;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.06);
+.senderAddress {
+  font-size: 12px;
+  color: #64748b;
 }
 
-/* ── Inline Reply Composer ── */
-.replyBox {
-  margin-top: 18px;
-  background: #ffffff;
-  border-radius: 16px;
-  padding: 16px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
-  border: 1px solid rgba(0, 0, 0, 0.08);
+.recipientAddress {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.fullDateTimestamp {
+  font-size: 12px;
+  color: #64748b;
+}
+
+/* ── AI Assistant Drawer ────────────────────────────────────────────── */
+.aiAssistantDrawer {
+  background-color: #111a2e;
+  border: 1px solid #1d3356;
+  border-radius: 8px;
+  padding: 14px 18px;
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-.replyHeader {
+.aiHeader {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  font-size: 12px;
-  color: #64748b;
-  font-weight: 500;
+  justify-content: space-between;
 }
 
-.replyTextarea {
-  width: 100%;
-  min-height: 90px;
-  border: none;
-  outline: none;
-  resize: vertical;
+.aiHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 13px;
-  font-family: inherit;
-  color: #0f172a;
+  font-weight: 600;
+  color: #38bdf8;
+}
+
+.aiActionBtnGroup {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.aiPillBtn {
+  padding: 4px 10px;
+  background-color: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: 5px;
+  color: #7dd3fc;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.aiPillBtn:hover {
+  background-color: rgba(56, 189, 248, 0.2);
+  color: #ffffff;
+}
+
+.aiSummaryBox {
+  background-color: #0b1322;
+  border: 1px solid #1a2a44;
+  border-radius: 6px;
+  padding: 12px 14px;
+  font-size: 12px;
+  color: #cbd5e1;
   line-height: 1.5;
 }
 
-.replyFooter {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-top: 1px solid rgba(0, 0, 0, 0.06);
-  padding-top: 10px;
+.aiSummaryBox ul {
+  margin: 6px 0 0 16px;
+  padding: 0;
 }
 
-.sendBtn {
-  background: #0d1527;
-  color: #ffffff;
-  border: none;
-  border-radius: 9999px;
-  padding: 6px 16px;
-  font-size: 12px;
-  font-weight: 600;
+.aiSummaryBox li {
+  margin-bottom: 4px;
+}
+
+.aiDraftContainer {
+  background-color: #0b1322;
+  border: 1px solid #1a2a44;
+  border-radius: 6px;
+  padding: 12px 14px;
+}
+
+.aiToneSelector {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.toneLabel {
+  font-size: 11px;
+  color: #64748b;
+  margin-right: 4px;
+}
+
+.toneBtn {
+  background-color: #162032;
+  border: 1px solid #273549;
+  border-radius: 4px;
+  color: #94a3b8;
+  font-size: 11px;
+  padding: 3px 8px;
   cursor: pointer;
+}
+
+.toneBtnActive {
+  background-color: #2563eb;
+  border-color: #2563eb;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.aiDraftTextarea {
+  width: 100%;
+  min-height: 90px;
+  padding: 8px 10px;
+  background-color: #10192a;
+  border: 1px solid #273549;
+  border-radius: 6px;
+  color: #f1f5f9;
+  font-size: 12px;
+  font-family: inherit;
+  resize: vertical;
+  line-height: 1.5;
+  outline: none;
+}
+
+.aiDraftFooter {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+/* Message Body */
+.messageBodyCard {
+  background-color: #0f172a;
+  border: 1px solid #1e293b;
+  border-radius: 8px;
+  padding: 24px;
+  color: #e2e8f0;
+  font-size: 14px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Quick Response Options Footer */
+.quickActionFooter {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.primaryReplyBtn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  transition: all 0.15s ease;
-}
-
-.sendBtn:hover {
-  background: #17243f;
-}
-
-.discardBtn {
-  background: transparent;
+  padding: 8px 16px;
+  background-color: #2563eb;
   border: none;
-  color: #64748b;
-  font-size: 12px;
+  border-radius: 6px;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.primaryReplyBtn:hover {
+  background-color: #1d4ed8;
+}
+
+.secondaryActionBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background-color: #162032;
+  border: 1px solid #273549;
+  border-radius: 6px;
+  color: #cbd5e1;
+  font-size: 13px;
   cursor: pointer;
 }
 
-.discardBtn:hover {
-  color: #ef4444;
+.secondaryActionBtn:hover {
+  background-color: #1e293b;
+  color: #ffffff;
 }
 
-/* ── Compose Modal ── */
+/* Inline Reply Composer */
+.inlineComposer {
+  background-color: #0f172a;
+  border: 1px solid #273549;
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.inlineComposerHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.inlineTextarea {
+  width: 100%;
+  min-height: 120px;
+  padding: 10px 12px;
+  background-color: #090e18;
+  border: 1px solid #273549;
+  border-radius: 6px;
+  color: #f1f5f9;
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.inlineComposerFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* ── Modals: Compose & Automation Rules ─────────────────────────────── */
 .modalBackdrop {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.45);
-  backdrop-filter: blur(4px);
-  z-index: 50;
+  background-color: rgba(0, 0, 0, 0.7);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  z-index: 100;
+  backdrop-filter: blur(2px);
 }
 
-.composeModal {
-  width: 100%;
-  max-width: 580px;
-  background: #ffffff;
-  border-radius: 20px;
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.25);
-  overflow: hidden;
+.composeModalWindow {
+  width: 640px;
+  max-width: 95vw;
+  background-color: #0f172a;
+  border: 1px solid #273549;
+  border-radius: 10px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
   display: flex;
   flex-direction: column;
-  animation: modalEnter 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@keyframes modalEnter {
-  from {
-    opacity: 0;
-    transform: scale(0.96) translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
+  overflow: hidden;
 }
 
 .modalHeader {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 16px 20px;
-  background: #0d1527;
-  color: #ffffff;
+  justify-content: space-between;
+  padding: 12px 18px;
+  background-color: #162032;
+  border-bottom: 1px solid #1e293b;
 }
 
 .modalTitle {
   font-size: 14px;
   font-weight: 600;
+  color: #f8fafc;
 }
 
-.modalClose {
-  background: transparent;
+.modalCloseBtn {
+  background: none;
   border: none;
   color: #94a3b8;
   cursor: pointer;
+  padding: 4px;
   display: flex;
   align-items: center;
-  justify-content: center;
 }
 
-.modalClose:hover {
+.modalCloseBtn:hover {
   color: #ffffff;
 }
 
 .modalForm {
-  padding: 18px 20px;
+  padding: 16px 18px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
-.formInput {
-  width: 100%;
-  padding: 9px 12px;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
+.fieldRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.fieldInput {
+  flex: 1;
+  height: 34px;
+  padding: 0 10px;
+  background-color: #162032;
+  border: 1px solid #273549;
+  border-radius: 6px;
+  color: #f1f5f9;
   font-size: 13px;
-  color: #0f172a;
   outline: none;
-  box-sizing: border-box;
 }
 
-.formInput:focus {
-  border-color: #0d1527;
+.fieldInput:focus {
+  border-color: #3b82f6;
 }
 
-.formTextarea {
+.bodyTextarea {
   width: 100%;
-  min-height: 160px;
-  padding: 12px;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
+  min-height: 180px;
+  padding: 10px;
+  background-color: #162032;
+  border: 1px solid #273549;
+  border-radius: 6px;
+  color: #f1f5f9;
   font-size: 13px;
-  color: #0f172a;
-  outline: none;
   font-family: inherit;
+  outline: none;
   resize: vertical;
-  box-sizing: border-box;
-}
-
-.formTextarea:focus {
-  border-color: #0d1527;
 }
 
 .modalFooter {
   display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  padding: 12px 20px;
-  border-top: 1px solid #f1f5f9;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
+  background-color: #162032;
+  border-top: 1px solid #1e293b;
 }
 
-/* ── Toast notification ── */
-.toast {
+.rulesModalWindow {
+  width: 820px;
+  max-width: 95vw;
+  max-height: 90vh;
+  background-color: #0f172a;
+  border: 1px solid #273549;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.rulesModalBody {
+  padding: 18px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.ruleCard {
+  background-color: #162032;
+  border: 1px solid #273549;
+  border-radius: 8px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ruleTopRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ruleNameText {
+  font-size: 14px;
+  font-weight: 600;
+  color: #f8fafc;
+}
+
+.ruleDescText {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.ruleConditionsBox {
+  font-size: 11px;
+  font-family: monospace;
+  color: #7dd3fc;
+  background-color: #0b1322;
+  padding: 6px 10px;
+  border-radius: 4px;
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  color: #64748b;
+  gap: 8px;
+  text-align: center;
+}
+
+/* Toast */
+.toastAlert {
   position: fixed;
   bottom: 24px;
   right: 24px;
-  background: #0d1527;
-  color: #ffffff;
+  background-color: #1e293b;
+  border: 1px solid #3b82f6;
+  color: #f8fafc;
   padding: 10px 18px;
-  border-radius: 9999px;
-  font-size: 12.5px;
+  border-radius: 8px;
+  font-size: 13px;
   font-weight: 500;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
-  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  z-index: 200;
   display: flex;
   align-items: center;
-  gap: 8px;
-  animation: toastFade 0.25s ease;
+  gap: 10px;
 }
 
-@keyframes toastFade {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.undoBtn {
+  background: none;
+  border: none;
+  color: #38bdf8;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  font-size: 12px;
+  text-decoration: underline;
 }
 
-/* ── Responsive adjustments ── */
-@media (max-width: 1024px) {
-  .mailWindow {
-    grid-template-columns: 80px 280px 1fr;
-    height: 90vh;
-  }
-  .brandTitle,
-  .composeBtn span,
-  .navItem span:not(.navItemIcon):not(.unreadBadge) {
+/* Responsive adjustments */
+@media (max-width: 900px) {
+  .navSidebar {
     display: none;
   }
-  .composeBtn {
-    justify-content: center;
-    padding: 0;
-  }
-  .navItem {
-    justify-content: center;
-    padding: 10px;
-  }
 }
 
-@media (max-width: 768px) {
-  .viewport {
-    padding: 12px;
-  }
-  .mailWindow {
-    grid-template-columns: 1fr;
-    height: auto;
-    max-height: 95vh;
-  }
-  .navColumn,
+@media (max-width: 650px) {
   .listColumn {
+    width: 100%;
+  }
+  .readerColumn {
     display: none;
   }
 }
