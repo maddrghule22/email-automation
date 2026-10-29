@@ -36,13 +36,73 @@ const devUsers: Map<string, D1User & { memberships: D1Membership[] }> = new Map(
       name: 'Yash Salunke',
       passwordHash: '$2b$10$L7TfSIfBYhAM1LO54iOtfOOHpur0ATPKh01DHJRUoSePG/BZgjvK.', // admin123
       status: 'ACTIVE',
-      roleId: 'role-admin',
+      roleId: 'role-super-admin',
       memberships: [
         {
           id: 'member-admin-yash',
           userId: 'user-admin-yash',
           tenantId: 'tenant-vorynex-prod',
-          roleId: 'role-admin',
+          roleId: 'role-super-admin',
+          status: 'Active',
+        },
+      ],
+    },
+  ],
+  [
+    'sarah.ops@vorynex.com',
+    {
+      id: 'user-ops-sarah',
+      email: 'sarah.ops@vorynex.com',
+      name: 'Sarah Jenkins',
+      passwordHash: '$2b$10$L7TfSIfBYhAM1LO54iOtfOOHpur0ATPKh01DHJRUoSePG/BZgjvK.', // manager123 / admin123
+      status: 'ACTIVE',
+      roleId: 'role-operations-manager',
+      memberships: [
+        {
+          id: 'member-ops-sarah',
+          userId: 'user-ops-sarah',
+          tenantId: 'tenant-ops-brick',
+          roleId: 'role-operations-manager',
+          status: 'Active',
+        },
+      ],
+    },
+  ],
+  [
+    'alex.dev@vorynex.com',
+    {
+      id: 'user-operator-alex',
+      email: 'alex.dev@vorynex.com',
+      name: 'Alex Chen',
+      passwordHash: '$2b$10$L7TfSIfBYhAM1LO54iOtfOOHpur0ATPKh01DHJRUoSePG/BZgjvK.', // operator123 / admin123
+      status: 'ACTIVE',
+      roleId: 'role-automation-operator',
+      memberships: [
+        {
+          id: 'member-operator-alex',
+          userId: 'user-operator-alex',
+          tenantId: 'tenant-dev-brick',
+          roleId: 'role-automation-operator',
+          status: 'Active',
+        },
+      ],
+    },
+  ],
+  [
+    'david.audit@vorynex.com',
+    {
+      id: 'user-auditor-david',
+      email: 'david.audit@vorynex.com',
+      name: 'David Vance',
+      passwordHash: '$2b$10$L7TfSIfBYhAM1LO54iOtfOOHpur0ATPKh01DHJRUoSePG/BZgjvK.', // auditor123 / admin123
+      status: 'ACTIVE',
+      roleId: 'role-compliance-auditor',
+      memberships: [
+        {
+          id: 'member-auditor-david',
+          userId: 'user-auditor-david',
+          tenantId: 'tenant-audit-brick',
+          roleId: 'role-compliance-auditor',
           status: 'Active',
         },
       ],
@@ -332,12 +392,38 @@ export async function getD1AuthContext(userId: string, tenantId?: string): Promi
         membership = { id: 'mem-admin', userId, tenantId: tenant.id, roleId: 'role-admin', status: 'Active' };
       }
 
-      const adminRole = {
-        id: 'role-admin',
-        name: 'Admin',
-        isSystem: true,
+      const roleKey = (user.roleId || membership.roleId || 'role-super-admin').toLowerCase();
+      let roleName = 'Super Admin';
+      let tier = 4;
+      let powerLevel = 100;
+      let maxApproval = Infinity;
+
+      if (roleKey.includes('manager')) {
+        roleName = 'Operations Manager';
+        tier = 3;
+        powerLevel = 75;
+        maxApproval = 25000;
+      } else if (roleKey.includes('operator')) {
+        roleName = 'Automation Operator';
+        tier = 2;
+        powerLevel = 50;
+        maxApproval = 5000;
+      } else if (roleKey.includes('auditor')) {
+        roleName = 'Compliance Auditor';
+        tier = 1;
+        powerLevel = 25;
+        maxApproval = 0;
+      }
+
+      const activeRole = {
+        id: user.roleId || membership.roleId || 'role-super-admin',
+        name: roleName,
+        tier,
+        powerLevel,
+        maxApprovalLimitUsd: maxApproval,
+        isSystem: tier >= 3,
         permissions: [
-          { id: 'perm-all-actions', roleId: 'role-admin', action: '*', resource: '*' }
+          { id: 'perm-all-actions', roleId: user.roleId || 'role-super-admin', action: '*', resource: '*' }
         ]
       };
 
@@ -345,7 +431,7 @@ export async function getD1AuthContext(userId: string, tenantId?: string): Promi
         user,
         tenant,
         membership,
-        roles: [adminRole]
+        roles: [activeRole]
       };
     } catch (err) {
       console.error('[D1] Error fetching auth context:', err);
@@ -355,18 +441,45 @@ export async function getD1AuthContext(userId: string, tenantId?: string): Promi
   // Memory fallback for local dev
   for (const [_, u] of devUsers.entries()) {
     if (u.id === userId) {
-      const tenant = { id: tenantId || 'tenant-vorynex-prod', name: 'Vorynex Enterprise', slug: 'vorynex-enterprise', status: 'Active' };
+      const tenant = { id: tenantId || (u.memberships[0]?.tenantId || 'tenant-vorynex-prod'), name: 'Vorynex Enterprise', slug: 'vorynex-enterprise', status: 'Active' };
       const mem = u.memberships.find(m => !tenantId || m.tenantId === tenantId) || u.memberships[0];
+      
+      const roleKey = (u.roleId || mem?.roleId || 'role-super-admin').toLowerCase();
+      let roleName = 'Super Admin';
+      let tier = 4;
+      let powerLevel = 100;
+      let maxApproval = Infinity;
+
+      if (roleKey.includes('manager')) {
+        roleName = 'Operations Manager';
+        tier = 3;
+        powerLevel = 75;
+        maxApproval = 25000;
+      } else if (roleKey.includes('operator')) {
+        roleName = 'Automation Operator';
+        tier = 2;
+        powerLevel = 50;
+        maxApproval = 5000;
+      } else if (roleKey.includes('auditor')) {
+        roleName = 'Compliance Auditor';
+        tier = 1;
+        powerLevel = 25;
+        maxApproval = 0;
+      }
+
       return {
-        user: { id: u.id, email: u.email, name: u.name, status: u.status },
+        user: { id: u.id, email: u.email, name: u.name, status: u.status, roleId: u.roleId },
         tenant,
-        membership: mem || { id: 'mem-admin', userId: u.id, tenantId: tenant.id, roleId: 'role-admin', status: 'Active' },
+        membership: mem || { id: 'mem-admin', userId: u.id, tenantId: tenant.id, roleId: u.roleId, status: 'Active' },
         roles: [
           {
-            id: 'role-admin',
-            name: 'Admin',
-            isSystem: true,
-            permissions: [{ id: 'perm-all', roleId: 'role-admin', action: '*', resource: '*' }]
+            id: u.roleId || 'role-super-admin',
+            name: roleName,
+            tier,
+            powerLevel,
+            maxApprovalLimitUsd: maxApproval,
+            isSystem: tier >= 3,
+            permissions: [{ id: 'perm-all', roleId: u.roleId || 'role-super-admin', action: '*', resource: '*' }]
           }
         ]
       };
@@ -715,3 +828,308 @@ export async function createD1Document(tenantId: string, data: any): Promise<any
     createdAt: now,
   };
 }
+
+// ============================================================================
+// Multi-Tenant Data Bricks, Exceptions & Metrics (Unified D1 Database)
+// ============================================================================
+
+export interface D1Exception {
+  id: string;
+  tenantId: string;
+  caseNumber: string;
+  title: string;
+  description: string;
+  category: string;
+  priority: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
+  status: 'OPEN' | 'IN_REVIEW' | 'RESOLVED' | 'ESCALATED' | 'REJECTED';
+  financialImpact: number;
+  requiredPowerLevel: number;
+  assignedTo?: string;
+  dueAt?: string;
+  resolvedAt?: string;
+  resolvedBy?: string;
+  createdAt: string;
+}
+
+const devExceptions: D1Exception[] = [
+  {
+    id: 'exc-vorynex-1092',
+    tenantId: 'tenant-vorynex-prod',
+    caseNumber: 'EXC-1092',
+    title: 'Vendor Remittance Bank Detail Discrepancy',
+    description: 'Beneficiary IBAN on invoice INV-2026-089 does not match master ERP vendor record. Anti-fraud hold applied.',
+    category: 'FINANCE_FRAUD',
+    priority: 'HIGH',
+    status: 'OPEN',
+    financialImpact: 14250.00,
+    requiredPowerLevel: 75,
+    assignedTo: 'Sarah Jenkins (Ops Manager)',
+    dueAt: new Date(Date.now() + 4 * 3600 * 1000).toISOString(),
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: 'exc-vorynex-1093',
+    tenantId: 'tenant-vorynex-prod',
+    caseNumber: 'EXC-1093',
+    title: 'Multi-Year Enterprise Cloud Infrastructure Contract',
+    description: 'Annual commitment exceeds standard operational threshold. Executive sign-off required before vendor execution.',
+    category: 'CONTRACT_AUTHORIZATION',
+    priority: 'CRITICAL',
+    status: 'OPEN',
+    financialImpact: 84000.00,
+    requiredPowerLevel: 100,
+    assignedTo: 'Yash Salunke (Super Admin)',
+    dueAt: new Date(Date.now() + 2 * 3600 * 1000).toISOString(),
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: 'exc-vorynex-1094',
+    tenantId: 'tenant-vorynex-prod',
+    caseNumber: 'EXC-1094',
+    title: 'Missing VAT Exemption Certificate for Cross-Border Order',
+    description: 'Invoice generated without active reverse-charge VAT certification on VIES database.',
+    category: 'TAX_COMPLIANCE',
+    priority: 'MEDIUM',
+    status: 'OPEN',
+    financialImpact: 3150.00,
+    requiredPowerLevel: 50,
+    assignedTo: 'Alex Chen (Operator)',
+    dueAt: new Date(Date.now() + 12 * 3600 * 1000).toISOString(),
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: 'exc-vorynex-1095',
+    tenantId: 'tenant-vorynex-prod',
+    caseNumber: 'EXC-1095',
+    title: 'Duplicate PO Item Code Warning in Carrier Invoice',
+    description: 'Line item #4 lists same bill of lading sequence as shipment delivered 3 days ago.',
+    category: 'DUPLICATE_AUDIT',
+    priority: 'LOW',
+    status: 'OPEN',
+    financialImpact: 950.00,
+    requiredPowerLevel: 50,
+    assignedTo: 'Alex Chen (Operator)',
+    dueAt: new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: 'exc-nexus-201',
+    tenantId: 'tenant-ops-brick',
+    caseNumber: 'EXC-201',
+    title: 'Port Demurrage Surcharge Exceeds Free Time Limit',
+    description: 'Container storage at Singapore terminal billed at 140% of contracted benchmark tariff.',
+    category: 'LOGISTICS_FEE',
+    priority: 'HIGH',
+    status: 'OPEN',
+    financialImpact: 6800.00,
+    requiredPowerLevel: 75,
+    assignedTo: 'Sarah Jenkins',
+    dueAt: new Date(Date.now() + 6 * 3600 * 1000).toISOString(),
+    createdAt: new Date().toISOString(),
+  },
+];
+
+/**
+ * Lists exceptions for a tenant from Cloudflare D1.
+ */
+export async function getD1Exceptions(tenantId: string, status?: string): Promise<D1Exception[]> {
+  const d1 = getD1Database();
+  if (d1) {
+    try {
+      let query = 'SELECT * FROM exceptions WHERE tenantId = ?';
+      const params: any[] = [tenantId];
+      if (status) {
+        query += ' AND status = ?';
+        params.push(status);
+      }
+      query += ' ORDER BY CASE priority WHEN "CRITICAL" THEN 1 WHEN "HIGH" THEN 2 WHEN "MEDIUM" THEN 3 ELSE 4 END, dueAt ASC';
+
+      const res = await d1.prepare(query).bind(...params).all();
+      if (res?.results && res.results.length > 0) {
+        return res.results as D1Exception[];
+      }
+    } catch (err) {
+      console.warn('[D1] Error querying exceptions table:', err);
+    }
+  }
+
+  return devExceptions.filter((e) => (e.tenantId === tenantId || tenantId === 'tenant-vorynex-prod') && (!status || e.status === status));
+}
+
+/**
+ * Updates or resolves an exception case in Cloudflare D1.
+ */
+export async function updateD1Exception(
+  id: string,
+  data: { status: 'RESOLVED' | 'ESCALATED' | 'REJECTED' | 'OPEN'; resolvedBy?: string }
+): Promise<D1Exception | null> {
+  const d1 = getD1Database();
+  const now = new Date().toISOString();
+
+  if (d1) {
+    try {
+      await d1
+        .prepare('UPDATE exceptions SET status = ?, resolvedBy = ?, resolvedAt = ?, updatedAt = ? WHERE id = ?')
+        .bind(data.status, data.resolvedBy || 'Admin User', now, now, id)
+        .run();
+
+      const updated = await d1.prepare('SELECT * FROM exceptions WHERE id = ? LIMIT 1').bind(id).first();
+      if (updated) return updated as D1Exception;
+    } catch (err) {
+      console.error('[D1] Error updating exception:', err);
+    }
+  }
+
+  const found = devExceptions.find((e) => e.id === id);
+  if (found) {
+    found.status = data.status;
+    found.resolvedBy = data.resolvedBy || 'Admin User';
+    found.resolvedAt = now;
+    return found;
+  }
+  return null;
+}
+
+/**
+ * Retrieves all tenants (Data Bricks) across the unified database.
+ */
+export async function getD1AllTenants(): Promise<Array<{ id: string; name: string; slug: string; status: string }>> {
+  const d1 = getD1Database();
+  if (d1) {
+    try {
+      const res = await d1.prepare('SELECT id, name, slug, status FROM tenants ORDER BY createdAt ASC').all();
+      if (res?.results && res.results.length > 0) {
+        return res.results as any[];
+      }
+    } catch (err) {
+      console.warn('[D1] Error fetching all tenants:', err);
+    }
+  }
+
+  return [
+    { id: 'tenant-vorynex-prod', name: 'Vorynex Global Enterprise', slug: 'vorynex-enterprise', status: 'Active' },
+    { id: 'tenant-ops-brick', name: 'Nexus Operations & Supply Chain', slug: 'nexus-operations', status: 'Active' },
+    { id: 'tenant-dev-brick', name: 'Apex Logistics Fleet & Fulfillment', slug: 'apex-logistics', status: 'Active' },
+    { id: 'tenant-audit-brick', name: 'SecureTrust Regulatory & Compliance', slug: 'securetrust-audit', status: 'Active' },
+  ];
+}
+
+/**
+ * Automatically provisions a dedicated Data Brick in Cloudflare D1 for any newly registered user.
+ */
+export async function provisionUserDatabrick(params: {
+  userId: string;
+  email: string;
+  name: string;
+  organizationName: string;
+  tenantId: string;
+}): Promise<void> {
+  const d1 = getD1Database();
+  const now = new Date().toISOString();
+
+  // Create industry-standard starter workflows
+  const wfId1 = crypto.randomUUID();
+  const wfId2 = crypto.randomUUID();
+  const intId1 = crypto.randomUUID();
+  const intId2 = crypto.randomUUID();
+  const excId1 = crypto.randomUUID();
+
+  if (d1) {
+    try {
+      await d1.batch([
+        d1.prepare('INSERT INTO workflows (id, tenantId, name, description, status, version) VALUES (?, ?, ?, ?, ?, ?)').bind(
+          wfId1,
+          params.tenantId,
+          `${params.organizationName} Inbound Email & Invoice Router`,
+          'Automates classification of emails, extracts line items from PDF attachments, and creates draft records.',
+          'Published',
+          1
+        ),
+        d1.prepare('INSERT INTO workflows (id, tenantId, name, description, status, version) VALUES (?, ?, ?, ?, ?, ?)').bind(
+          wfId2,
+          params.tenantId,
+          'Executive Customer SLA Escalation',
+          'Monitors urgent customer communications and alerts key personnel before SLA breaches.',
+          'Published',
+          1
+        ),
+        d1.prepare('INSERT INTO integrations (id, tenantId, provider, name, type, status, enabled, config) VALUES (?, ?, ?, ?, ?, ?, ?, ?)').bind(
+          intId1,
+          params.tenantId,
+          'gmail',
+          `${params.name}'s Google Workspace Mailbox`,
+          'EMAIL',
+          'CONNECTED',
+          1,
+          JSON.stringify({ email: params.email, latencyMs: 29 })
+        ),
+        d1.prepare('INSERT INTO integrations (id, tenantId, provider, name, type, status, enabled, config) VALUES (?, ?, ?, ?, ?, ?, ?, ?)').bind(
+          intId2,
+          params.tenantId,
+          'rest-connector',
+          'ERP System Webhook Gateway',
+          'ERP',
+          'CONNECTED',
+          1,
+          JSON.stringify({ mode: 'active', latencyMs: 45 })
+        ),
+        d1.prepare('INSERT INTO exceptions (id, tenantId, caseNumber, title, description, category, priority, status, financialImpact, requiredPowerLevel, assignedTo, dueAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').bind(
+          excId1,
+          params.tenantId,
+          'EXC-101',
+          'Initial Onboarding Invoice Verification',
+          'Automated validation check for first vendor transaction setup. Ready for role-authorized approval.',
+          'FINANCE_VERIFICATION',
+          'MEDIUM',
+          'OPEN',
+          2450.00,
+          50,
+          params.name,
+          new Date(Date.now() + 8 * 3600 * 1000).toISOString()
+        )
+      ]);
+    } catch (err) {
+      console.error('[D1] Error provisioning user databrick in D1:', err);
+    }
+  }
+
+  // Also add to in-memory fallback
+  devWorkflows.push({
+    id: wfId1,
+    tenantId: params.tenantId,
+    name: `${params.organizationName} Inbound Email & Invoice Router`,
+    description: 'Automates classification of emails and extracts invoice lines.',
+    status: 'Published',
+    version: 1,
+    createdAt: now,
+    updatedAt: now,
+  });
+
+  devIntegrations.push({
+    id: intId1,
+    tenantId: params.tenantId,
+    provider: 'gmail',
+    name: `${params.name}'s Google Workspace Mailbox`,
+    type: 'EMAIL',
+    status: 'CONNECTED',
+    enabled: 1,
+    createdAt: now,
+  });
+
+  devExceptions.push({
+    id: excId1,
+    tenantId: params.tenantId,
+    caseNumber: 'EXC-101',
+    title: 'Initial Onboarding Invoice Verification',
+    description: 'Automated validation check for first vendor transaction.',
+    category: 'FINANCE_VERIFICATION',
+    priority: 'MEDIUM',
+    status: 'OPEN',
+    financialImpact: 2450.00,
+    requiredPowerLevel: 50,
+    assignedTo: params.name,
+    dueAt: new Date(Date.now() + 8 * 3600 * 1000).toISOString(),
+    createdAt: now,
+  });
+}
+

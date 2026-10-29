@@ -1,57 +1,75 @@
 export const runtime = 'edge';
 import { NextResponse } from 'next/server';
-import { ExceptionService } from '@/lib/exceptions/exception-service';
-import { ResolutionEngine } from '@/lib/exceptions/resolution-engine';
 import { successResponse, errorResponse } from '@/lib/api-response';
-import db from '@/lib/db';
+import { updateD1Exception, getD1Exceptions, logD1Audit } from '@/lib/d1';
+import { SessionService } from '@/lib/auth/session';
+import { AuthorizationService } from '@/lib/auth/authorization';
+import { checkAccessSpecifier, RoleIdentifier } from '@/lib/auth/hierarchy-power';
+import { ForbiddenError } from '@/lib/errors';
 
-export async function GET(request: Request, context: { params: Promise<{ id: string }> }) {
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
-    const tenantId = 'tenant_1';
-    const { id } = await context.params;
-    
-    const exception = await db.exceptionCase.findUnique({
-      where: { id, tenantId },
-      include: { history: { orderBy: { createdAt: 'desc' } } }
+    const { id } = await params;
+    const body = await request.json();
+    const { status, action } = body; // 'RESOLVED', 'REJECTED', 'ESCALATED'
+
+    let user = { id: 'user-admin-yash', name: 'Yash Salunke', roleId: 'role-super-admin' };
+    let tenantId = 'tenant-vorynex-prod';
+
+    try {
+      const auth = await AuthorizationService.resolveContext();
+      if (auth?.user) user = auth.user;
+      if (auth?.tenant) tenantId = auth.tenant.id;
+    } catch {
+      const session = await SessionService.getSession();
+      if (session) {
+        user.id = session.userId;
+        if (session.tenantId) tenantId = session.tenantId;
+      }
+    }
+
+    // Find the exception to evaluate financial amount
+    const exceptions = await getD1Exceptions(tenantId);
+    const exc = exceptions.find((e) => e.id === id);
+
+    if (exc && status === 'RESOLVED') {
+      const rawRole = (user.roleId || 'SUPER_ADMIN').toUpperCase();
+      const roleKey: RoleIdentifier = rawRole.includes('ADMIN')
+        ? 'SUPER_ADMIN'
+        : rawRole.includes('MANAGER')
+        ? 'OPERATIONS_MANAGER'
+        : rawRole.includes('OPERATOR')
+        ? 'AUTOMATION_OPERATOR'
+        : 'COMPLIANCE_AUDITOR';
+
+      const check = checkAccessSpecifier(roleKey, 'FINANCIAL_APPROVAL', {
+        amountUsd: exc.financialImpact,
+      });
+
+      if (!check.allowed) {
+        throw new ForbiddenError(check.reason || 'Insufficient power level to approve this exception.');
+      }
+    }
+
+    const updated = await updateD1Exception(id, {
+      status: status || 'RESOLVED',
+      resolvedBy: `${user.name} (${user.roleId || 'Admin'})`,
     });
 
-    if (!exception) return NextResponse.json({ success: false, error: { message: 'Not found' } }, { status: 404 });
-    return successResponse(exception);
-  } catch (error) {
-    return errorResponse(error);
-  }
-}
+    await logD1Audit({
+      actorType: 'USER',
+      actorId: user.id,
+      action: `exception.${(status || 'RESOLVED').toLowerCase()}`,
+      resourceType: 'exception',
+      resourceId: id,
+      tenantId,
+      metadata: { financialImpact: exc?.financialImpact, resolvedBy: user.name },
+    });
 
-export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
-  try {
-    const tenantId = 'tenant_1';
-    const actorId = 'user_1';
-    const body = await request.json();
-    const { id } = await context.params;
-    
-    if (body.action === 'RESOLVE') {
-      const result = await ResolutionEngine.resolveException(
-        tenantId,
-        id,
-        body.resolutionCode,
-        body.resolutionSummary,
-        actorId
-      );
-      return successResponse(result);
-    }
-
-    if (body.status) {
-      const result = await ExceptionService.transitionStatus(
-        tenantId,
-        id,
-        body.status,
-        actorId,
-        body.reason
-      );
-      return successResponse(result);
-    }
-
-    return errorResponse(new Error('Invalid action'));
+    return successResponse(updated);
   } catch (error) {
     return errorResponse(error);
   }

@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import styles from './layout.module.css';
 
 interface Notification {
@@ -14,11 +15,15 @@ interface Notification {
 const INITIAL_NOTIFICATIONS: Notification[] = [
   { id: '1', text: '⚡ AI Reply auto-generated for info@client.com', time: '5m ago', unread: true },
   { id: '2', text: '📄 Project_Requirements.pdf processed (92% confidence)', time: '18m ago', unread: true },
-  { id: '3', text: '☁️ Cloudflare D1 synced: 10 tables ready', time: '1h ago', unread: false },
+  { id: '3', text: '☁️ Cloudflare D1 synced: 13 tables & 4 databricks ready', time: '1h ago', unread: false },
   { id: '4', text: '✅ Email automation workflow "Inbound RFP" triggered', time: '3h ago', unread: false },
 ];
 
 export default function DashboardHeader() {
+  const router = useRouter();
+  const [currentUser, setCurrentUser] = useState<any>({ name: 'Yash Salunke', email: 'admin@vorynex.com' });
+  const [currentRole, setCurrentRole] = useState<any>({ name: 'Super Admin', tier: 4, badge: '⚡ Level 4: Super Admin', badgeColor: '#7c3aed' });
+  const [activeBrick, setActiveBrick] = useState<any>({ name: 'Vorynex Global Enterprise' });
   const [notifications, setNotifications] = useState<Notification[]>(INITIAL_NOTIFICATIONS);
   const [showNotifs, setShowNotifs] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -28,6 +33,23 @@ export default function DashboardHeader() {
   const userMenuRef = useRef<HTMLDivElement>(null);
 
   const hasUnread = notifications.some((n) => n.unread);
+
+  const loadUserData = () => {
+    fetch('/api/v1/auth/me')
+      .then(res => res.json())
+      .then(json => {
+        if (json.data) {
+          if (json.data.user) setCurrentUser(json.data.user);
+          if (json.data.role) setCurrentRole(json.data.role);
+          if (json.data.databrick) setActiveBrick(json.data.databrick);
+        }
+      })
+      .catch(() => {});
+  };
+
+  useEffect(() => {
+    loadUserData();
+  }, []);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -46,12 +68,53 @@ export default function DashboardHeader() {
     setNotifications((prev) => prev.map((n) => ({ ...n, unread: false })));
   };
 
+  const handleSwitchUser = async (email: string) => {
+    try {
+      await fetch('/api/v1/auth/switch-brick', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      setShowUserMenu(false);
+      window.location.reload();
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await fetch('/api/v1/auth/logout', { method: 'POST' });
+    } catch {}
+    router.push('/login');
+  };
+
+  const initials = currentUser?.name
+    ? currentUser.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
+    : 'YS';
+
   return (
     <header className={styles.header}>
       <div className={styles.headerGreeting}>
-        <h1>Good Morning, Yash</h1>
-        <p>Here&apos;s what&apos;s happening with your email automation today.</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <h1 style={{ margin: 0 }}>Good Morning, {currentUser.name?.split(' ')[0] || 'Yash'}</h1>
+          <span style={{
+            backgroundColor: currentRole?.badgeColor || '#7c3aed',
+            color: '#fff',
+            fontSize: '11px',
+            fontWeight: 700,
+            padding: '2px 8px',
+            borderRadius: '4px',
+            letterSpacing: '0.2px'
+          }}>
+            {currentRole?.badge || '⚡ Level 4: Super Admin'}
+          </span>
+        </div>
+        <p style={{ marginTop: '2px' }}>
+          Unified Database Brick: <strong style={{ color: 'var(--voltus-blue)' }}>{activeBrick?.name || 'Vorynex Global Enterprise'}</strong>
+        </p>
       </div>
+
       <div className={styles.headerRight}>
         {/* Interactive Search Bar */}
         <div className={styles.searchBar}>
@@ -129,33 +192,119 @@ export default function DashboardHeader() {
           <div
             className={styles.avatar}
             onClick={() => setShowUserMenu(!showUserMenu)}
-            title="User Profile"
+            title="User Profile & Hierarchy Settings"
+            style={{ backgroundColor: currentRole?.badgeColor || '#7c3aed' }}
           >
-            YS
+            {initials}
           </div>
 
           {showUserMenu && (
-            <div className={`${styles.popoverMenu} ${styles.userMenu}`}>
+            <div className={`${styles.popoverMenu} ${styles.userMenu}`} style={{ width: '280px' }}>
               <div className={styles.userMenuHeader}>
-                <div className={styles.userName}>Yash Salunke</div>
-                <div className={styles.userEmail}>yash@vorynex.com</div>
+                <div className={styles.userName}>{currentUser.name}</div>
+                <div className={styles.userEmail}>{currentUser.email}</div>
+                <div style={{
+                  marginTop: '6px',
+                  display: 'inline-block',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  color: currentRole?.badgeColor || '#7c3aed',
+                  backgroundColor: '#f5f3ff',
+                  padding: '2px 6px',
+                  borderRadius: '4px'
+                }}>
+                  {currentRole?.badge}
+                </div>
               </div>
+
+              {/* Data Brick & Hierarchy Switcher */}
+              <div style={{ padding: '8px 12px', borderBottom: '1px solid var(--border-light)', backgroundColor: '#f8fafc' }}>
+                <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '6px' }}>
+                  SWITCH DATA BRICK &amp; ROLE:
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <button
+                    onClick={() => handleSwitchUser('admin@vorynex.com')}
+                    style={{
+                      textAlign: 'left',
+                      padding: '4px 6px',
+                      borderRadius: '4px',
+                      border: 'none',
+                      background: currentUser.email === 'admin@vorynex.com' ? '#ede9fe' : 'none',
+                      fontSize: '11.5px',
+                      cursor: 'pointer',
+                      fontWeight: currentUser.email === 'admin@vorynex.com' ? 700 : 400
+                    }}
+                  >
+                    ⚡ Yash Salunke (Super Admin)
+                  </button>
+                  <button
+                    onClick={() => handleSwitchUser('sarah.ops@vorynex.com')}
+                    style={{
+                      textAlign: 'left',
+                      padding: '4px 6px',
+                      borderRadius: '4px',
+                      border: 'none',
+                      background: currentUser.email === 'sarah.ops@vorynex.com' ? '#dbeafe' : 'none',
+                      fontSize: '11.5px',
+                      cursor: 'pointer',
+                      fontWeight: currentUser.email === 'sarah.ops@vorynex.com' ? 700 : 400
+                    }}
+                  >
+                    🛡️ Sarah Jenkins (Ops Manager)
+                  </button>
+                  <button
+                    onClick={() => handleSwitchUser('alex.dev@vorynex.com')}
+                    style={{
+                      textAlign: 'left',
+                      padding: '4px 6px',
+                      borderRadius: '4px',
+                      border: 'none',
+                      background: currentUser.email === 'alex.dev@vorynex.com' ? '#d1fae5' : 'none',
+                      fontSize: '11.5px',
+                      cursor: 'pointer',
+                      fontWeight: currentUser.email === 'alex.dev@vorynex.com' ? 700 : 400
+                    }}
+                  >
+                    ⚙️ Alex Chen (Operator)
+                  </button>
+                  <button
+                    onClick={() => handleSwitchUser('david.audit@vorynex.com')}
+                    style={{
+                      textAlign: 'left',
+                      padding: '4px 6px',
+                      borderRadius: '4px',
+                      border: 'none',
+                      background: currentUser.email === 'david.audit@vorynex.com' ? '#fef3c7' : 'none',
+                      fontSize: '11.5px',
+                      cursor: 'pointer',
+                      fontWeight: currentUser.email === 'david.audit@vorynex.com' ? 700 : 400
+                    }}
+                  >
+                    👁️ David Vance (Auditor)
+                  </button>
+                </div>
+              </div>
+
               <Link href="/inbox" className={styles.userMenuItem} onClick={() => setShowUserMenu(false)}>
                 <span>📬</span> MailHive Inbox
               </Link>
-              <Link href="/customers" className={styles.userMenuItem} onClick={() => setShowUserMenu(false)}>
-                <span>⚙️</span> Workspace Settings
+              <Link href="/exceptions" className={styles.userMenuItem} onClick={() => setShowUserMenu(false)}>
+                <span>🛡️</span> Operations Control &amp; Approvals
+              </Link>
+              <Link href="/workflows" className={styles.userMenuItem} onClick={() => setShowUserMenu(false)}>
+                <span>⚡</span> Automation Engine
               </Link>
               <Link href="/integrations" className={styles.userMenuItem} onClick={() => setShowUserMenu(false)}>
-                <span>🔗</span> Integrations &amp; API
+                <span>🔗</span> Integrations &amp; Gateways
+              </Link>
+              <Link href="/customers" className={styles.userMenuItem} onClick={() => setShowUserMenu(false)}>
+                <span>⚙️</span> Tenant &amp; Security Settings
               </Link>
               <button
                 className={styles.userMenuItem}
                 style={{ color: '#ef4444' }}
-                onClick={() => {
-                  setShowUserMenu(false);
-                  alert('Signed out of Vorynex Automation');
-                }}
+                onClick={handleSignOut}
               >
                 <span>🚪</span> Sign Out
               </button>

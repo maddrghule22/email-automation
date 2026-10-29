@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import styles from './page.module.css';
 
 interface StatItem {
@@ -338,6 +338,9 @@ export default function DashboardOverview() {
   const [activeTab, setActiveTab] = useState<'analysis' | 'approval'>('analysis');
 
   // Interactivity states
+  const [currentUser, setCurrentUser] = useState<any>({ name: 'Yash Salunke', email: 'admin@vorynex.com' });
+  const [currentRole, setCurrentRole] = useState<any>({ name: 'Super Admin', tier: 4, badge: '⚡ Level 4: Super Admin' });
+  const [activeBrick, setActiveBrick] = useState<any>({ name: 'Vorynex Global Enterprise' });
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [isRegenerating, setIsRegenerating] = useState<boolean>(false);
   const [isEditingReply, setIsEditingReply] = useState<boolean>(false);
@@ -345,6 +348,19 @@ export default function DashboardOverview() {
   const [showTemplateModal, setShowTemplateModal] = useState<boolean>(false);
   const [showOptionsMenu, setShowOptionsMenu] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('/api/v1/auth/me')
+      .then((res) => res.json())
+      .then((json) => {
+        if (json.data) {
+          if (json.data.user) setCurrentUser(json.data.user);
+          if (json.data.role) setCurrentRole(json.data.role);
+          if (json.data.databrick) setActiveBrick(json.data.databrick);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // Active email
   const currentEmail = useMemo(() => {
@@ -443,6 +459,11 @@ export default function DashboardOverview() {
   };
 
   const handleApproveEmail = () => {
+    if (currentRole?.tier === 1) {
+      showToast('🔒 Auditor accounts have read-only permissions and cannot sign off on outgoing client emails.');
+      return;
+    }
+
     const timeNow = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     setEmails((prev) =>
       prev.map((e) =>
@@ -451,7 +472,7 @@ export default function DashboardOverview() {
           : e
       )
     );
-    showToast('🎉 Email and AI reply approved! Dispatched to client.');
+    showToast(`🎉 Email and AI reply approved by ${currentUser?.name || 'Administrator'} (${currentRole?.name})! Dispatched to client.`);
   };
 
   const handleUndoApproval = () => {
@@ -912,7 +933,7 @@ export default function DashboardOverview() {
                     Approved &amp; Dispatched
                   </span>
                   <p className={styles.approvedSub}>
-                    Verified by Yash Salunke at {currentEmail.approvedAt || 'Today'}.
+                    Verified by {currentUser?.name || 'Administrator'} ({currentRole?.name}) at {currentEmail.approvedAt || 'Today'}.
                   </p>
                   <button className={styles.undoApprovalBtn} onClick={handleUndoApproval}>
                     Revoke Approval
@@ -992,7 +1013,7 @@ export default function DashboardOverview() {
                   </div>
                   <p className={styles.stepDesc}>
                     {currentEmail.isApproved
-                      ? `Signed off by Yash Salunke at ${currentEmail.approvedAt}`
+                      ? `Signed off by ${currentUser?.name || 'Administrator'} (${currentRole?.name}) at ${currentEmail.approvedAt}`
                       : 'Requires review before outgoing SMTP dispatch'}
                   </p>
                 </div>

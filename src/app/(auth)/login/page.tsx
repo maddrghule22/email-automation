@@ -35,8 +35,8 @@ export default function LoginPage() {
     }
   };
 
-  const fillDemoCredentials = () => {
-    setEmail('admin@vorynex.com');
+  const fillCredentials = (userEmail: string) => {
+    setEmail(userEmail);
     setPassword('admin123');
   };
 
@@ -59,39 +59,89 @@ export default function LoginPage() {
         </div>
       )}
 
-      {/* D1 Demo Credentials Box */}
+      {/* D1 Hierarchy Power Accounts Box */}
       <div style={{
         backgroundColor: '#eff6ff',
         border: '1px solid #bfdbfe',
-        borderRadius: '8px',
+        borderRadius: '10px',
         padding: '12px 14px',
         marginBottom: '1.25rem',
         fontSize: '12px',
         color: '#1e40af',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center'
       }}>
-        <div>
-          <strong>Cloudflare D1 Demo Account:</strong>
-          <div style={{ fontFamily: 'monospace', marginTop: '2px' }}>admin@vorynex.com / admin123</div>
+        <div style={{ fontWeight: 600, marginBottom: '6px' }}>
+          Unified D1 Database — Select Role &amp; Data Brick:
         </div>
-        <button
-          type="button"
-          onClick={fillDemoCredentials}
-          style={{
-            padding: '4px 8px',
-            backgroundColor: '#2563eb',
-            color: '#fff',
-            borderRadius: '6px',
-            fontSize: '11px',
-            fontWeight: 600,
-            border: 'none',
-            cursor: 'pointer'
-          }}
-        >
-          Auto-fill
-        </button>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '6px' }}>
+          <button
+            type="button"
+            onClick={() => fillCredentials('admin@vorynex.com')}
+            style={{
+              padding: '6px 8px',
+              backgroundColor: '#7c3aed',
+              color: '#fff',
+              borderRadius: '6px',
+              fontSize: '11px',
+              fontWeight: 600,
+              border: 'none',
+              cursor: 'pointer',
+              textAlign: 'left'
+            }}
+          >
+            ⚡ Level 4: Super Admin
+          </button>
+          <button
+            type="button"
+            onClick={() => fillCredentials('sarah.ops@vorynex.com')}
+            style={{
+              padding: '6px 8px',
+              backgroundColor: '#2563eb',
+              color: '#fff',
+              borderRadius: '6px',
+              fontSize: '11px',
+              fontWeight: 600,
+              border: 'none',
+              cursor: 'pointer',
+              textAlign: 'left'
+            }}
+          >
+            🛡️ Level 3: Ops Manager
+          </button>
+          <button
+            type="button"
+            onClick={() => fillCredentials('alex.dev@vorynex.com')}
+            style={{
+              padding: '6px 8px',
+              backgroundColor: '#059669',
+              color: '#fff',
+              borderRadius: '6px',
+              fontSize: '11px',
+              fontWeight: 600,
+              border: 'none',
+              cursor: 'pointer',
+              textAlign: 'left'
+            }}
+          >
+            ⚙️ Level 2: Operator
+          </button>
+          <button
+            type="button"
+            onClick={() => fillCredentials('david.audit@vorynex.com')}
+            style={{
+              padding: '6px 8px',
+              backgroundColor: '#d97706',
+              color: '#fff',
+              borderRadius: '6px',
+              fontSize: '11px',
+              fontWeight: 600,
+              border: 'none',
+              cursor: 'pointer',
+              textAlign: 'left'
+            }}
+          >
+            👁️ Level 1: Auditor
+          </button>
+        </div>
       </div>
 
       <form className={styles.form} onSubmit={handleLogin}>

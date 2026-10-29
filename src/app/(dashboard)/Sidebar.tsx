@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import styles from './layout.module.css';
@@ -56,6 +57,16 @@ const NAV_ITEMS: NavItem[] = [
     ),
   },
   {
+    name: 'Invoices & Ledger',
+    href: '/invoices',
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="2" y="4" width="20" height="16" rx="2" />
+        <line x1="2" y1="10" x2="22" y2="10" />
+      </svg>
+    ),
+  },
+  {
     name: 'Approvals',
     href: '/exceptions',
     icon: (
@@ -105,6 +116,33 @@ const BOTTOM_ITEMS: NavItem[] = [
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const [user, setUser] = useState<{ name: string; role: string; initials: string; color: string }>({
+    name: 'Yash Salunke',
+    role: 'Super Admin',
+    initials: 'YS',
+    color: '#7c3aed',
+  });
+
+  useEffect(() => {
+    fetch('/api/v1/auth/me')
+      .then((res) => res.json())
+      .then((json) => {
+        if (json.data?.user) {
+          const u = json.data.user;
+          const r = json.data.role;
+          const initials = u.name
+            ? u.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
+            : 'YS';
+          setUser({
+            name: u.name,
+            role: r?.name || 'Admin',
+            initials,
+            color: r?.badgeColor || '#7c3aed',
+          });
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   return (
     <aside className={styles.sidebar}>
@@ -158,10 +196,10 @@ export default function Sidebar() {
           </Link>
         ))}
         <div className={styles.sidebarUser}>
-          <div className={styles.sidebarAvatar}>YS</div>
+          <div className={styles.sidebarAvatar} style={{ backgroundColor: user.color }}>{user.initials}</div>
           <div className={styles.sidebarUserInfo}>
-            <p className={styles.sidebarUserName}>Yash Salunke</p>
-            <p className={styles.sidebarUserRole}>Admin</p>
+            <p className={styles.sidebarUserName}>{user.name}</p>
+            <p className={styles.sidebarUserRole}>{user.role}</p>
           </div>
           <span style={{ color: '#64748b', fontSize: 12 }}>⌄</span>
         </div>

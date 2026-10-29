@@ -4,7 +4,7 @@ import { PasswordService } from '@/lib/auth/password';
 import { TokenService } from '@/lib/auth/token';
 import { successResponse, errorResponse } from '@/lib/api-response';
 import { ValidationError } from '@/lib/errors';
-import { findUserByEmailFromD1, registerD1User, createD1Session, logD1Audit } from '@/lib/d1';
+import { findUserByEmailFromD1, registerD1User, createD1Session, logD1Audit, provisionUserDatabrick } from '@/lib/d1';
 
 export async function POST(request: Request) {
   try {
@@ -50,6 +50,15 @@ export async function POST(request: Request) {
       name,
       passwordHash,
       organizationName,
+    });
+
+    // Automatically provision dedicated multi-tenant Data Brick in D1
+    await provisionUserDatabrick({
+      userId,
+      email,
+      name,
+      organizationName,
+      tenantId,
     });
 
     // 4. Create session in D1
