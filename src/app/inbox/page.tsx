@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import styles from './inbox.module.css';
 
@@ -47,6 +47,16 @@ interface RuleExecution {
   createdAt: string;
 }
 
+interface CurrentUser {
+  name: string;
+  email: string;
+  roleName: string;
+  tier: number;
+  initials: string;
+  activeBrick: string;
+  availableBricks: Array<{ id: string; name: string; slug: string }>;
+}
+
 export default function MailHivePage() {
   const [emails, setEmails] = useState<Email[]>([]);
   const [loading, setLoading] = useState(true);
@@ -65,6 +75,19 @@ export default function MailHivePage() {
     spam: 0,
     trash: 0,
   });
+
+  // User Profile & Tenant State
+  const [currentUser, setCurrentUser] = useState<CurrentUser>({
+    name: 'Yash Salunke',
+    email: 'admin@vorynex.com',
+    roleName: 'Super Admin',
+    tier: 4,
+    initials: 'YS',
+    activeBrick: 'Vorynex Enterprise',
+    availableBricks: [],
+  });
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
 
   // Compose state
   const [isComposeOpen, setIsComposeOpen] = useState(false);
@@ -96,6 +119,7 @@ export default function MailHivePage() {
   const [ruleExecutions, setRuleExecutions] = useState<RuleExecution[]>([]);
   const [rulesTab, setRulesTab] = useState<'rules' | 'builder' | 'history'>('rules');
   const [newRuleName, setNewRuleName] = useState('');
+  const [newRuleDesc, setNewRuleDesc] = useState('');
   const [newRuleTrigger, setNewRuleTrigger] = useState('ON_RECEIVE');
   const [newRuleLogic, setNewRuleLogic] = useState<'AND' | 'OR'>('AND');
   const [newRuleCondField, setNewRuleCondField] = useState('subject');
@@ -103,6 +127,9 @@ export default function MailHivePage() {
   const [newRuleActionType, setNewRuleActionType] = useState('apply_label');
   const [newRuleActionVal, setNewRuleActionVal] = useState('Urgent');
   const [ruleTestResult, setRuleTestResult] = useState<string | null>(null);
+
+  // Keyboard Shortcuts Modal state
+  const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
 
   // Toast & Undo
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -115,6 +142,63 @@ export default function MailHivePage() {
       setToastMessage(prev => (prev === msg ? null : prev));
       setUndoAction(null);
     }, 4500);
+  };
+
+  // Close menus on outside click
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setIsUserMenuOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Fetch current user from /api/v1/auth/me
+  useEffect(() => {
+    fetch('/api/v1/auth/me')
+      .then(res => res.json())
+      .then(json => {
+        if (json.data?.user) {
+          const u = json.data.user;
+          const r = json.data.role;
+          const b = json.data.databrick;
+          const initials = u.name
+            ? u.name
+                .split(' ')
+                .map((n: string) => n[0])
+                .join('')
+                .slice(0, 2)
+                .toUpperCase()
+            : 'YS';
+          setCurrentUser({
+            name: u.name,
+            email: u.email,
+            roleName: r?.name || 'Super Admin',
+            tier: r?.tier || 4,
+            initials,
+            activeBrick: b?.name || 'Vorynex Enterprise',
+            availableBricks: json.data.availableDatabricks || [],
+          });
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  // Switch Data Brick
+  const handleSwitchBrick = async (tenantId: string) => {
+    try {
+      await fetch('/api/v1/auth/switch-brick', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tenantId }),
+      });
+      setIsUserMenuOpen(false);
+      window.location.reload();
+    } catch (e) {
+      showToast('Failed to switch Data Brick');
+    }
   };
 
   // Fetch emails from D1 Edge backend
@@ -168,10 +252,8 @@ export default function MailHivePage() {
   };
 
   useEffect(() => {
-    if (isRulesModalOpen) {
-      fetchRules();
-    }
-  }, [isRulesModalOpen]);
+    fetchRules();
+  }, []);
 
   // Currently selected email
   const currentEmail = useMemo(() => {
@@ -202,7 +284,7 @@ export default function MailHivePage() {
     e?.stopPropagation();
     const newStatus = !email.isStarred;
     setEmails(prev => prev.map(item => (item.id === email.id ? { ...item, isStarred: newStatus } : item)));
-    showToast(newStatus ? 'Starred message' : 'Unstarred message');
+    showToast(newStatus ? 'Starred conversation' : 'Unstarred conversation');
 
     fetch(`/api/v1/emails/${email.id}`, {
       method: 'PATCH',
@@ -233,7 +315,6 @@ export default function MailHivePage() {
 
     setEmails(prev => prev.filter(e => e.id !== target.id));
     showToast('Conversation archived', () => {
-      // Undo
       setEmails(prev => [target, ...prev]);
       fetch(`/api/v1/emails/${target.id}`, {
         method: 'PATCH',
@@ -257,7 +338,6 @@ export default function MailHivePage() {
 
     setEmails(prev => prev.filter(e => e.id !== target.id));
     showToast('Moved to Trash', () => {
-      // Undo
       setEmails(prev => [target, ...prev]);
       fetch(`/api/v1/emails/${target.id}`, {
         method: 'PATCH',
@@ -305,7 +385,7 @@ export default function MailHivePage() {
     if (!currentEmail) return;
     const target = currentEmail;
     setEmails(prev => prev.filter(e => e.id !== target.id));
-    showToast('Reported as spam and moved');
+    showToast('Reported as spam and quarantined');
 
     fetch(`/api/v1/emails/${target.id}`, {
       method: 'PATCH',
@@ -371,7 +451,7 @@ export default function MailHivePage() {
       const json = await res.json();
       if (!res.ok) throw new Error(json.error?.message || 'Failed to dispatch email');
 
-      showToast(isDraft ? 'Draft saved to D1' : 'Message sent via Verified Edge Outbox');
+      showToast(isDraft ? 'Draft saved to D1 vault' : 'Message dispatched via Verified Edge Gateway');
       setIsComposeOpen(false);
       setComposeTo('');
       setComposeCc('');
@@ -454,6 +534,33 @@ export default function MailHivePage() {
     }
   };
 
+  // Toggle Rule Enable / Disable
+  const handleToggleRuleStatus = async (ruleId: string, currentStatus: boolean) => {
+    try {
+      const newStatus = !currentStatus;
+      setRules(prev => prev.map(r => (r.id === ruleId ? { ...r, isEnabled: newStatus } : r)));
+      await fetch(`/api/v1/emails/rules/${ruleId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isEnabled: newStatus }),
+      });
+      showToast(`Rule ${newStatus ? 'enabled' : 'paused'}`);
+    } catch (e) {
+      showToast('Failed to update rule');
+    }
+  };
+
+  // Delete Rule
+  const handleDeleteRule = async (ruleId: string) => {
+    try {
+      setRules(prev => prev.filter(r => r.id !== ruleId));
+      await fetch(`/api/v1/emails/rules/${ruleId}`, { method: 'DELETE' });
+      showToast('Rule deleted successfully');
+    } catch (e) {
+      showToast('Failed to delete rule');
+    }
+  };
+
   // Automation Rule Creation
   const handleCreateRule = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -465,6 +572,7 @@ export default function MailHivePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: newRuleName,
+          description: newRuleDesc || `Automatically routes when ${newRuleCondField} matches "${newRuleCondVal}"`,
           triggerType: newRuleTrigger,
           conditionLogic: newRuleLogic,
           conditions: [{ field: newRuleCondField, operator: 'contains', value: newRuleCondVal }],
@@ -475,14 +583,33 @@ export default function MailHivePage() {
       const json = await res.json();
       if (!res.ok) throw new Error(json.error?.message || 'Failed to create rule');
 
-      showToast(`Automation rule "${newRuleName}" activated!`);
+      showToast(`Rule "${newRuleName}" deployed!`);
       setNewRuleName('');
+      setNewRuleDesc('');
       setNewRuleCondVal('');
       setRulesTab('rules');
       fetchRules();
     } catch (err: any) {
       showToast(`Rule Error: ${err.message}`);
     }
+  };
+
+  // Apply Preset Template to Builder
+  const applyPresetTemplate = (preset: {
+    name: string;
+    desc: string;
+    field: string;
+    val: string;
+    action: string;
+    actionVal: string;
+  }) => {
+    setNewRuleName(preset.name);
+    setNewRuleDesc(preset.desc);
+    setNewRuleCondField(preset.field);
+    setNewRuleCondVal(preset.val);
+    setNewRuleActionType(preset.action);
+    setNewRuleActionVal(preset.actionVal);
+    setRulesTab('builder');
   };
 
   // Test Rule Preview
@@ -502,31 +629,29 @@ export default function MailHivePage() {
         }),
       });
       const json = await res.json();
-      setRuleTestResult(json.verdict || 'Test evaluation finished.');
+      setRuleTestResult(json.verdict || 'Evaluation completed.');
     } catch (e) {
-      setRuleTestResult('Preview error');
+      setRuleTestResult('Preview simulation failed.');
     }
   };
 
   // Keyboard navigation shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Don't trigger if user is typing in an input or textarea
       if (['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName)) {
         if (e.key === 'Escape') {
           setIsComposeOpen(false);
           setIsRulesModalOpen(false);
+          setIsShortcutsOpen(false);
           setIsReplying(false);
         }
         return;
       }
 
       if (e.key === 'j') {
-        // Next email
         const idx = emails.findIndex(item => item.id === selectedId);
         if (idx < emails.length - 1) handleSelectEmail(emails[idx + 1].id);
       } else if (e.key === 'k') {
-        // Prev email
         const idx = emails.findIndex(item => item.id === selectedId);
         if (idx > 0) handleSelectEmail(emails[idx - 1].id);
       } else if (e.key === 'c') {
@@ -539,10 +664,15 @@ export default function MailHivePage() {
         handleArchive();
       } else if (e.key === 's' && currentEmail) {
         handleToggleStar(currentEmail);
+      } else if (e.key === '?') {
+        e.preventDefault();
+        setIsShortcutsOpen(prev => !prev);
       } else if (e.key === 'Escape') {
         setIsComposeOpen(false);
         setIsRulesModalOpen(false);
+        setIsShortcutsOpen(false);
         setIsReplying(false);
+        setIsUserMenuOpen(false);
       }
     };
 
@@ -565,33 +695,135 @@ export default function MailHivePage() {
             <span>Vorynex MailHive</span>
           </div>
 
-          <Link href="/overview" className={styles.backLink}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="15 18 9 12 15 6" />
-            </svg>
-            Dashboard
-          </Link>
+          <div className={styles.brandDivider} />
 
-          <Link href="/workflows" className={styles.backLink}>
-            Automation Engine
-          </Link>
+          <nav className={styles.navBreadcrumbLinks}>
+            <Link href="/overview" className={styles.breadcrumbLink} title="Navigate to Overview Dashboard">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="3" width="7" height="7" />
+                <rect x="14" y="3" width="7" height="7" />
+                <rect x="14" y="14" width="7" height="7" />
+                <rect x="3" y="14" width="7" height="7" />
+              </svg>
+              <span>Dashboard</span>
+            </Link>
+
+            <Link href="/workflows" className={styles.breadcrumbLink} title="Navigate to Automation Workflows">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+              </svg>
+              <span>Workflows</span>
+            </Link>
+          </nav>
         </div>
 
         <div className={styles.topBarRight}>
+          {/* Refresh / Sync Button */}
           <button
-            className={styles.automationBtn}
-            onClick={() => setIsRulesModalOpen(true)}
-            title="Manage Email Automation Rules & Triggers"
+            className={`${styles.iconActionBtn} ${loading ? styles.iconActionBtnSpinning : ''}`}
+            onClick={fetchEmails}
+            title="Sync Mailbox with Edge Server"
           >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
             </svg>
-            Automation Rules ({rules.length || 4})
           </button>
 
-          <div className={styles.userBadge}>
-            <div className={styles.userAvatar}>YS</div>
-            <span>yash@vorynex.com</span>
+          {/* Professional Automations Button */}
+          <button
+            className={styles.headerActionBtn}
+            onClick={() => {
+              setRulesTab('rules');
+              setIsRulesModalOpen(true);
+            }}
+            title="Manage Email Automation Rules & Filters"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="4" y1="21" x2="4" y2="14" />
+              <line x1="4" y1="10" x2="4" y2="3" />
+              <line x1="12" y1="21" x2="12" y2="12" />
+              <line x1="12" y1="8" x2="12" y2="3" />
+              <line x1="20" y1="21" x2="20" y2="16" />
+              <line x1="20" y1="12" x2="20" y2="3" />
+              <line x1="1" y1="14" x2="7" y2="14" />
+              <line x1="9" y1="8" x2="15" y2="8" />
+              <line x1="17" y1="16" x2="23" y2="16" />
+            </svg>
+            <span>Rules & Triggers</span>
+            <span className={styles.headerCountBadge}>{rules.length || 4}</span>
+          </button>
+
+          {/* Keyboard Shortcuts Button */}
+          <button
+            className={styles.iconActionBtn}
+            onClick={() => setIsShortcutsOpen(true)}
+            title="Keyboard Shortcuts (?)"
+          >
+            <span style={{ fontSize: 13, fontWeight: 700 }}>?</span>
+          </button>
+
+          {/* Refined User Menu */}
+          <div className={styles.userMenuContainer} ref={userMenuRef}>
+            <button
+              className={styles.userMenuTrigger}
+              onClick={() => setIsUserMenuOpen(prev => !prev)}
+              aria-label="User Account Menu"
+            >
+              <div className={styles.userAvatar}>
+                {currentUser.initials}
+                <span className={styles.userStatusDot} />
+              </div>
+              <div className={styles.userMetaCompact}>
+                <span className={styles.userMetaName}>{currentUser.name.split(' ')[0]}</span>
+                <span className={styles.userMetaRole}>Tier {currentUser.tier}</span>
+              </div>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7 }}>
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </button>
+
+            {/* Dropdown Menu */}
+            {isUserMenuOpen && (
+              <div className={styles.userDropdownMenu}>
+                <div className={styles.userDropdownHeader}>
+                  <div className={styles.userDropdownName}>{currentUser.name}</div>
+                  <div className={styles.userDropdownEmail}>{currentUser.email}</div>
+                  <div className={styles.userDropdownTier}>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                    </svg>
+                    <span>{currentUser.roleName} (Power {currentUser.tier === 4 ? '100' : '75'})</span>
+                  </div>
+                </div>
+
+                <div className={styles.userDropdownSection}>
+                  <div className={styles.userDropdownLabel}>Active Data Brick</div>
+                  {currentUser.availableBricks.map(b => (
+                    <button
+                      key={b.id}
+                      className={`${styles.userDropdownItem} ${currentUser.activeBrick === b.name ? styles.userDropdownItemActive : ''}`}
+                      onClick={() => handleSwitchBrick(b.id)}
+                    >
+                      <span>{b.name}</span>
+                      {currentUser.activeBrick === b.name && <span>✓</span>}
+                    </button>
+                  ))}
+                </div>
+
+                <div className={styles.userDropdownSection}>
+                  <Link href="/exceptions" className={styles.userDropdownItem}>
+                    <span>Sign-off & Approvals</span>
+                    <span style={{ fontSize: 10, color: '#94a3b8' }}>Tier {currentUser.tier}</span>
+                  </Link>
+                  <Link href="/customers" className={styles.userDropdownItem}>
+                    <span>Data Bricks & Settings</span>
+                  </Link>
+                  <Link href="/login" className={styles.userDropdownItem} style={{ color: '#f87171' }}>
+                    <span>Sign Out</span>
+                  </Link>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </header>
@@ -727,13 +959,50 @@ export default function MailHivePage() {
             </button>
           </div>
 
+          {/* Dedicated Automation Navigation Section */}
+          <div className={styles.navSectionTitle}>Automation</div>
+          <div className={styles.navGroup}>
+            <button
+              className={styles.navFolderItem}
+              onClick={() => {
+                setRulesTab('rules');
+                setIsRulesModalOpen(true);
+              }}
+            >
+              <div className={styles.navFolderLeft}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                </svg>
+                <span>Active Rules</span>
+              </div>
+              <span className={styles.folderCountBadge}>{rules.length || 4}</span>
+            </button>
+
+            <button
+              className={styles.navFolderItem}
+              onClick={() => {
+                setRulesTab('history');
+                setIsRulesModalOpen(true);
+              }}
+            >
+              <div className={styles.navFolderLeft}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10" />
+                  <polyline points="12 6 12 12 14 14" />
+                </svg>
+                <span>Execution Audit</span>
+              </div>
+              <span className={styles.folderCountBadge}>{ruleExecutions.length || 3}</span>
+            </button>
+          </div>
+
           <div className={styles.navSidebarFooter}>
             <div className={styles.statusIndicator}>
               <span className={styles.liveDot} />
               <span>Edge D1 Synced</span>
             </div>
             <div style={{ fontSize: 10, color: '#475569', padding: '0 4px' }}>
-              Press <b>?</b> for keyboard shortcuts
+              Press <kbd style={{ padding: '1px 4px', background: '#162032', border: '1px solid #273549', borderRadius: 3 }}>?</kbd> for shortcuts
             </div>
           </div>
         </aside>
@@ -853,11 +1122,13 @@ export default function MailHivePage() {
 
                     <div className={`${styles.subjectText} ${!item.isRead ? styles.subjectTextUnread : ''}`}>
                       {item.isImportant && (
-                        <span className={styles.importantBadge} title="Important">
-                          🏷️{' '}
+                        <span className={styles.importantTagIcon} title="Important">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+                          </svg>
                         </span>
                       )}
-                      {item.subject}
+                      <span>{item.subject}</span>
                     </div>
 
                     <div className={styles.snippetText}>{item.snippet}</div>
@@ -922,7 +1193,10 @@ export default function MailHivePage() {
                   </button>
 
                   <button className={styles.readerToolBtn} onClick={handleToggleImportant} title="Toggle Important">
-                    <span>🏷️ {currentEmail.isImportant ? 'Important' : 'Mark Important'}</span>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill={currentEmail.isImportant ? '#f59e0b' : 'none'} stroke={currentEmail.isImportant ? '#f59e0b' : 'currentColor'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+                    </svg>
+                    <span>{currentEmail.isImportant ? 'Important' : 'Mark Important'}</span>
                   </button>
                 </div>
 
@@ -950,7 +1224,12 @@ export default function MailHivePage() {
                 {/* Title & Folder Header */}
                 <div className={styles.mailSubjectHeader}>
                   <h1 className={styles.readerTitle}>{currentEmail.subject}</h1>
-                  <span className={styles.folderIndicatorPill}>► {currentEmail.folder}</span>
+                  <span className={styles.folderIndicatorPill}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+                    </svg>
+                    <span>{currentEmail.folder.toUpperCase()}</span>
+                  </span>
                 </div>
 
                 {/* Sender Card */}
@@ -977,21 +1256,37 @@ export default function MailHivePage() {
                 <div className={styles.aiAssistantDrawer}>
                   <div className={styles.aiHeader}>
                     <div className={styles.aiHeaderLeft}>
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
                       </svg>
-                      <span>AI Copilot & Extraction</span>
+                      <span>AI Intelligence Copilot</span>
                     </div>
 
                     <div className={styles.aiActionBtnGroup}>
                       <button className={styles.aiPillBtn} onClick={handleAiSummarize} disabled={isSummarizing}>
-                        {isSummarizing ? 'Analyzing...' : '⚡ Summarize Thread'}
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <line x1="21" y1="10" x2="3" y2="10" />
+                          <line x1="21" y1="6" x2="3" y2="6" />
+                          <line x1="21" y1="14" x2="3" y2="14" />
+                          <line x1="21" y1="18" x2="3" y2="18" />
+                        </svg>
+                        <span>{isSummarizing ? 'Analyzing...' : 'Summarize Thread'}</span>
                       </button>
+
                       <button className={styles.aiPillBtn} onClick={() => handleAiDraftReply()} disabled={isGeneratingDraft}>
-                        {isGeneratingDraft ? 'Drafting...' : '✍️ Draft Reply'}
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M12 20h9" />
+                          <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                        </svg>
+                        <span>{isGeneratingDraft ? 'Drafting...' : 'Draft Response'}</span>
                       </button>
+
                       <button className={styles.aiPillBtn} onClick={handleAiExtractActions} disabled={isExtractingActions}>
-                        {isExtractingActions ? 'Extracting...' : '📋 Extract Deadlines'}
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="9 11 12 14 22 4" />
+                          <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+                        </svg>
+                        <span>{isExtractingActions ? 'Extracting...' : 'Extract Deadlines'}</span>
                       </button>
                     </div>
                   </div>
@@ -1156,7 +1451,13 @@ export default function MailHivePage() {
         <div className={styles.modalBackdrop} onClick={() => setIsComposeOpen(false)}>
           <div className={styles.composeModalWindow} onClick={e => e.stopPropagation()}>
             <div className={styles.modalHeader}>
-              <span className={styles.modalTitle}>New Message</span>
+              <span className={styles.modalTitle}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 20h9" />
+                  <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                </svg>
+                <span>New Message</span>
+              </span>
               <button className={styles.modalCloseBtn} onClick={() => setIsComposeOpen(false)}>
                 ✕
               </button>
@@ -1263,13 +1564,26 @@ export default function MailHivePage() {
         </div>
       )}
 
-      {/* ── Automation Rules Modal ── */}
+      {/* ── Redesigned Automation Rules Modal ── */}
       {isRulesModalOpen && (
         <div className={styles.modalBackdrop} onClick={() => setIsRulesModalOpen(false)}>
           <div className={styles.rulesModalWindow} onClick={e => e.stopPropagation()}>
             <div className={styles.modalHeader}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span className={styles.modalTitle}>⚡ Email Automation Rules Engine</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <span className={styles.modalTitle}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="4" y1="21" x2="4" y2="14" />
+                    <line x1="4" y1="10" x2="4" y2="3" />
+                    <line x1="12" y1="21" x2="12" y2="12" />
+                    <line x1="12" y1="8" x2="12" y2="3" />
+                    <line x1="20" y1="21" x2="20" y2="16" />
+                    <line x1="20" y1="12" x2="20" y2="3" />
+                    <line x1="1" y1="14" x2="7" y2="14" />
+                    <line x1="9" y1="8" x2="15" y2="8" />
+                    <line x1="17" y1="16" x2="23" y2="16" />
+                  </svg>
+                  <span>Automation Rules & Filters</span>
+                </span>
                 <div className={styles.filterTabs}>
                   <button
                     className={`${styles.filterTabBtn} ${rulesTab === 'rules' ? styles.filterTabBtnActive : ''}`}
@@ -1281,13 +1595,13 @@ export default function MailHivePage() {
                     className={`${styles.filterTabBtn} ${rulesTab === 'builder' ? styles.filterTabBtnActive : ''}`}
                     onClick={() => setRulesTab('builder')}
                   >
-                    + New Rule
+                    + Create Rule
                   </button>
                   <button
                     className={`${styles.filterTabBtn} ${rulesTab === 'history' ? styles.filterTabBtnActive : ''}`}
                     onClick={() => setRulesTab('history')}
                   >
-                    Audit History ({ruleExecutions.length})
+                    Audit Trail ({ruleExecutions.length})
                   </button>
                 </div>
               </div>
@@ -1298,6 +1612,7 @@ export default function MailHivePage() {
             </div>
 
             <div className={styles.rulesModalBody}>
+              {/* Tab 1: Human-Readable Rules List */}
               {rulesTab === 'rules' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   {rules.length === 0 ? (
@@ -1307,30 +1622,70 @@ export default function MailHivePage() {
                       <div key={rule.id} className={styles.ruleCard}>
                         <div className={styles.ruleTopRow}>
                           <div>
-                            <span className={styles.ruleNameText}>{rule.name}</span>
+                            <div className={styles.ruleNameText}>{rule.name}</div>
                             <div className={styles.ruleDescText}>{rule.description}</div>
                           </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <span className={styles.tagBadge}>Trigger: {rule.triggerType}</span>
-                            <span style={{ fontSize: 11, color: '#94a3b8' }}>
-                              Ran {rule.executionCount} time(s)
+                          <div className={styles.ruleControls}>
+                            <span style={{ fontSize: 11, color: '#64748b' }}>
+                              {rule.isEnabled ? 'Active' : 'Paused'}
                             </span>
-                            <span
-                              style={{
-                                fontSize: 11,
-                                padding: '2px 8px',
-                                borderRadius: 4,
-                                backgroundColor: rule.isEnabled ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)',
-                                color: rule.isEnabled ? '#10b981' : '#ef4444',
-                              }}
-                            >
-                              {rule.isEnabled ? 'ENABLED' : 'PAUSED'}
-                            </span>
+                            <label className={styles.switchToggle}>
+                              <input
+                                type="checkbox"
+                                checked={rule.isEnabled}
+                                onChange={() => handleToggleRuleStatus(rule.id, rule.isEnabled)}
+                              />
+                              <span className={styles.sliderRound} />
+                            </label>
                           </div>
                         </div>
 
-                        <div className={styles.ruleConditionsBox}>
-                          Match ({rule.conditionLogic}): {JSON.stringify(rule.conditions)} → Actions: {JSON.stringify(rule.actions)}
+                        {/* Human-Readable Condition & Action Pipeline */}
+                        <div className={styles.rulePipelineBox}>
+                          <div className={styles.pipelineRow}>
+                            <span className={`${styles.pipelineLabel} ${styles.pipelineLabelIf}`}>IF</span>
+                            <span style={{ fontSize: 11, color: '#94a3b8' }}>
+                              ({rule.conditionLogic})
+                            </span>
+                            {(rule.conditions || []).map((cond, idx) => (
+                              <span key={idx} className={styles.conditionChip}>
+                                <strong style={{ color: '#f8fafc' }}>{cond.field.toUpperCase()}</strong> {cond.operator} &ldquo;{cond.value}&rdquo;
+                              </span>
+                            ))}
+                          </div>
+
+                          <div className={styles.pipelineRow}>
+                            <span className={`${styles.pipelineLabel} ${styles.pipelineLabelThen}`}>THEN</span>
+                            {(rule.actions || []).map((act, idx) => (
+                              <span key={idx} className={styles.actionChip}>
+                                → {act.action.replace('_', ' ').toUpperCase()}: {String(act.value)}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className={styles.ruleMetaFooter}>
+                          <span>
+                            Trigger: <strong>{rule.triggerType}</strong> • Executed <strong>{rule.executionCount}</strong> time(s)
+                          </span>
+                          <div className={styles.ruleMetaActions}>
+                            <button
+                              className={styles.textBtn}
+                              onClick={() => {
+                                setNewRuleCondVal(rule.conditions[0]?.value || '');
+                                setNewRuleName(`${rule.name} (Copy)`);
+                                setRulesTab('builder');
+                              }}
+                            >
+                              Duplicate
+                            </button>
+                            <button
+                              className={`${styles.textBtn} ${styles.textBtnDanger}`}
+                              onClick={() => handleDeleteRule(rule.id)}
+                            >
+                              Delete
+                            </button>
+                          </div>
                         </div>
                       </div>
                     ))
@@ -1338,144 +1693,244 @@ export default function MailHivePage() {
                 </div>
               )}
 
+              {/* Tab 2: Visual Rule Builder with 1-Click Presets */}
               {rulesTab === 'builder' && (
-                <form onSubmit={handleCreateRule} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                   <div>
-                    <label style={{ fontSize: 12, color: '#94a3b8', display: 'block', marginBottom: 4 }}>
-                      Rule Name:
+                    <label style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', color: '#64748b', display: 'block', marginBottom: 6 }}>
+                      Quick Rule Templates (Click to Populate)
                     </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Inbound Vendor Invoices Router"
-                      className={styles.fieldInput}
-                      style={{ width: '100%' }}
-                      value={newRuleName}
-                      onChange={e => setNewRuleName(e.target.value)}
-                      required
-                    />
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                    <div>
-                      <label style={{ fontSize: 12, color: '#94a3b8', display: 'block', marginBottom: 4 }}>
-                        Trigger Event:
-                      </label>
-                      <select
-                        className={styles.fieldInput}
-                        style={{ width: '100%' }}
-                        value={newRuleTrigger}
-                        onChange={e => setNewRuleTrigger(e.target.value)}
+                    <div className={styles.presetTemplatesGrid}>
+                      <div
+                        className={styles.presetCard}
+                        onClick={() =>
+                          applyPresetTemplate({
+                            name: 'Inbound Invoices Auto-Tagger',
+                            desc: 'Flags incoming billing notices with Finance label and marks Important',
+                            field: 'subject',
+                            val: 'Invoice',
+                            action: 'apply_label',
+                            actionVal: 'Finance',
+                          })
+                        }
                       >
-                        <option value="ON_RECEIVE">When New Email Arrives</option>
-                        <option value="SENDER_MATCH">When Sender Matches Domain</option>
-                        <option value="KEYWORD_MATCH">When Keywords Detected in Body</option>
-                      </select>
-                    </div>
+                        <div className={styles.presetTitle}>📑 Inbound Invoices</div>
+                        <div className={styles.presetDesc}>Tag with Finance & prioritize</div>
+                      </div>
 
-                    <div>
-                      <label style={{ fontSize: 12, color: '#94a3b8', display: 'block', marginBottom: 4 }}>
-                        Condition Evaluation:
-                      </label>
-                      <select
-                        className={styles.fieldInput}
-                        style={{ width: '100%' }}
-                        value={newRuleLogic}
-                        onChange={e => setNewRuleLogic(e.target.value as any)}
+                      <div
+                        className={styles.presetCard}
+                        onClick={() =>
+                          applyPresetTemplate({
+                            name: 'High-Value Wire Approvals',
+                            desc: 'Escalates transactions > $25k to executive sign-off queue',
+                            field: 'body',
+                            val: '$',
+                            action: 'apply_label',
+                            actionVal: 'Approvals',
+                          })
+                        }
                       >
-                        <option value="AND">Match ALL Conditions (AND)</option>
-                        <option value="OR">Match ANY Condition (OR)</option>
-                      </select>
-                    </div>
-                  </div>
+                        <div className={styles.presetTitle}>🚨 High-Value Approvals</div>
+                        <div className={styles.presetDesc}>Route to Tier 4 sign-off</div>
+                      </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 12 }}>
-                    <div>
-                      <label style={{ fontSize: 12, color: '#94a3b8', display: 'block', marginBottom: 4 }}>
-                        Field to Inspect:
-                      </label>
-                      <select
-                        className={styles.fieldInput}
-                        style={{ width: '100%' }}
-                        value={newRuleCondField}
-                        onChange={e => setNewRuleCondField(e.target.value)}
+                      <div
+                        className={styles.presetCard}
+                        onClick={() =>
+                          applyPresetTemplate({
+                            name: 'Logistics Bill of Lading Filter',
+                            desc: 'Classifies carrier shipment manifests automatically',
+                            field: 'subject',
+                            val: 'Bill of Lading',
+                            action: 'apply_label',
+                            actionVal: 'Logistics',
+                          })
+                        }
                       >
-                        <option value="subject">Subject Line</option>
-                        <option value="sender">Sender Email / Name</option>
-                        <option value="body">Email Body Content</option>
-                        <option value="recipient">Recipient</option>
-                      </select>
-                    </div>
+                        <div className={styles.presetTitle}>🚢 Freight & Customs</div>
+                        <div className={styles.presetDesc}>Auto-label container notices</div>
+                      </div>
 
-                    <div>
-                      <label style={{ fontSize: 12, color: '#94a3b8', display: 'block', marginBottom: 4 }}>
-                        Contains Keyword:
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="e.g. Invoice, PO-, Demurrage"
-                        className={styles.fieldInput}
-                        style={{ width: '100%' }}
-                        value={newRuleCondVal}
-                        onChange={e => setNewRuleCondVal(e.target.value)}
-                        required
-                      />
+                      <div
+                        className={styles.presetCard}
+                        onClick={() =>
+                          applyPresetTemplate({
+                            name: 'Vendor Acknowledgment Draft',
+                            desc: 'Prepares confirmation draft for operations sync inquiries',
+                            field: 'sender',
+                            val: 'acmesolutions.io',
+                            action: 'create_draft',
+                            actionVal: 'We have received your dispatch update.',
+                          })
+                        }
+                      >
+                        <div className={styles.presetTitle}>✉️ Auto-Acknowledge</div>
+                        <div className={styles.presetDesc}>Prepare review response draft</div>
+                      </div>
                     </div>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 12 }}>
-                    <div>
-                      <label style={{ fontSize: 12, color: '#94a3b8', display: 'block', marginBottom: 4 }}>
-                        Automated Action:
-                      </label>
-                      <select
-                        className={styles.fieldInput}
-                        style={{ width: '100%' }}
-                        value={newRuleActionType}
-                        onChange={e => setNewRuleActionType(e.target.value)}
-                      >
-                        <option value="apply_label">Apply Label</option>
-                        <option value="mark_important">Mark Important</option>
-                        <option value="star">Star Conversation</option>
-                        <option value="create_draft">Draft Auto-Reply</option>
-                      </select>
+                  <form onSubmit={handleCreateRule} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                      <div>
+                        <label style={{ fontSize: 12, color: '#94a3b8', display: 'block', marginBottom: 4 }}>
+                          Rule Name:
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. Inbound Vendor Invoices Router"
+                          className={styles.fieldInput}
+                          style={{ width: '100%' }}
+                          value={newRuleName}
+                          onChange={e => setNewRuleName(e.target.value)}
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <label style={{ fontSize: 12, color: '#94a3b8', display: 'block', marginBottom: 4 }}>
+                          Description:
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. Automatically tags freight bills and alerts dispatch"
+                          className={styles.fieldInput}
+                          style={{ width: '100%' }}
+                          value={newRuleDesc}
+                          onChange={e => setNewRuleDesc(e.target.value)}
+                        />
+                      </div>
                     </div>
 
-                    <div>
-                      <label style={{ fontSize: 12, color: '#94a3b8', display: 'block', marginBottom: 4 }}>
-                        Action Parameter:
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="e.g. Finance, High-Priority"
-                        className={styles.fieldInput}
-                        style={{ width: '100%' }}
-                        value={newRuleActionVal}
-                        onChange={e => setNewRuleActionVal(e.target.value)}
-                      />
-                    </div>
-                  </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                      <div>
+                        <label style={{ fontSize: 12, color: '#94a3b8', display: 'block', marginBottom: 4 }}>
+                          Trigger Event:
+                        </label>
+                        <select
+                          className={styles.fieldInput}
+                          style={{ width: '100%' }}
+                          value={newRuleTrigger}
+                          onChange={e => setNewRuleTrigger(e.target.value)}
+                        >
+                          <option value="ON_RECEIVE">When New Email Arrives</option>
+                          <option value="SENDER_MATCH">When Sender Matches Domain</option>
+                          <option value="KEYWORD_MATCH">When Keywords Detected in Body</option>
+                        </select>
+                      </div>
 
-                  {/* Rule Preview Tester */}
-                  <div style={{ padding: 12, backgroundColor: '#090e18', border: '1px solid #1e293b', borderRadius: 6 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                      <span style={{ fontSize: 12, fontWeight: 600, color: '#38bdf8' }}>
-                        Preview Test against Current Email
-                      </span>
-                      <button type="button" className={styles.secondaryActionBtn} onClick={handleTestRule}>
-                        Run Rule Simulation
+                      <div>
+                        <label style={{ fontSize: 12, color: '#94a3b8', display: 'block', marginBottom: 4 }}>
+                          Condition Evaluation:
+                        </label>
+                        <select
+                          className={styles.fieldInput}
+                          style={{ width: '100%' }}
+                          value={newRuleLogic}
+                          onChange={e => setNewRuleLogic(e.target.value as any)}
+                        >
+                          <option value="AND">Match ALL Conditions (AND)</option>
+                          <option value="OR">Match ANY Condition (OR)</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 12 }}>
+                      <div>
+                        <label style={{ fontSize: 12, color: '#94a3b8', display: 'block', marginBottom: 4 }}>
+                          Field to Inspect:
+                        </label>
+                        <select
+                          className={styles.fieldInput}
+                          style={{ width: '100%' }}
+                          value={newRuleCondField}
+                          onChange={e => setNewRuleCondField(e.target.value)}
+                        >
+                          <option value="subject">Subject Line</option>
+                          <option value="sender">Sender Email / Name</option>
+                          <option value="body">Email Body Content</option>
+                          <option value="recipient">Recipient</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label style={{ fontSize: 12, color: '#94a3b8', display: 'block', marginBottom: 4 }}>
+                          Contains Keyword / Value:
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. Invoice, PO-, BL-88, Demurrage"
+                          className={styles.fieldInput}
+                          style={{ width: '100%' }}
+                          value={newRuleCondVal}
+                          onChange={e => setNewRuleCondVal(e.target.value)}
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 12 }}>
+                      <div>
+                        <label style={{ fontSize: 12, color: '#94a3b8', display: 'block', marginBottom: 4 }}>
+                          Automated Action:
+                        </label>
+                        <select
+                          className={styles.fieldInput}
+                          style={{ width: '100%' }}
+                          value={newRuleActionType}
+                          onChange={e => setNewRuleActionType(e.target.value)}
+                        >
+                          <option value="apply_label">Apply Label</option>
+                          <option value="mark_important">Mark Important</option>
+                          <option value="star">Star Conversation</option>
+                          <option value="create_draft">Draft Auto-Reply</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label style={{ fontSize: 12, color: '#94a3b8', display: 'block', marginBottom: 4 }}>
+                          Action Parameter / Tag:
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. Finance, Logistics, High-Priority"
+                          className={styles.fieldInput}
+                          style={{ width: '100%' }}
+                          value={newRuleActionVal}
+                          onChange={e => setNewRuleActionVal(e.target.value)}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Rule Preview Simulation */}
+                    <div style={{ padding: 12, backgroundColor: '#0b111e', border: '1px solid #1e293b', borderRadius: 6 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                        <span style={{ fontSize: 12, fontWeight: 600, color: '#38bdf8' }}>
+                          Preview Simulation (against &ldquo;{currentEmail?.subject}&rdquo;)
+                        </span>
+                        <button type="button" className={styles.secondaryActionBtn} onClick={handleTestRule}>
+                          Test Rule
+                        </button>
+                      </div>
+                      {ruleTestResult && (
+                        <div style={{ fontSize: 12, color: '#cbd5e1' }}>{ruleTestResult}</div>
+                      )}
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 8 }}>
+                      <button type="button" className={styles.secondaryActionBtn} onClick={() => setRulesTab('rules')}>
+                        Cancel
+                      </button>
+                      <button type="submit" className={styles.primaryReplyBtn}>
+                        Deploy Rule to Edge
                       </button>
                     </div>
-                    {ruleTestResult && (
-                      <div style={{ fontSize: 12, color: '#cbd5e1' }}>{ruleTestResult}</div>
-                    )}
-                  </div>
-
-                  <button type="submit" className={styles.primaryReplyBtn} style={{ alignSelf: 'flex-end', marginTop: 10 }}>
-                    Deploy Automation Rule to D1 Edge
-                  </button>
-                </form>
+                  </form>
+                </div>
               )}
 
+              {/* Tab 3: Execution Log */}
               {rulesTab === 'history' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   {ruleExecutions.length === 0 ? (
@@ -1485,17 +1940,54 @@ export default function MailHivePage() {
                       <div key={exec.id} className={styles.ruleCard}>
                         <div className={styles.ruleTopRow}>
                           <span className={styles.ruleNameText}>{exec.ruleName}</span>
-                          <span style={{ fontSize: 11, color: '#10b981' }}>{exec.status}</span>
+                          <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 4, backgroundColor: 'rgba(16, 185, 129, 0.15)', color: '#10b981' }}>
+                            {exec.status}
+                          </span>
                         </div>
-                        <div style={{ fontSize: 12, color: '#cbd5e1' }}>Email: {exec.emailSubject}</div>
+                        <div style={{ fontSize: 12, color: '#cbd5e1' }}>Matched: {exec.emailSubject}</div>
                         <div style={{ fontSize: 11, color: '#64748b' }}>
-                          Executed: {exec.actionsExecuted} • {new Date(exec.createdAt).toLocaleString()}
+                          Actions: {exec.actionsExecuted} • {new Date(exec.createdAt).toLocaleString()}
                         </div>
                       </div>
                     ))
                   )}
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Keyboard Shortcuts Modal ── */}
+      {isShortcutsOpen && (
+        <div className={styles.modalBackdrop} onClick={() => setIsShortcutsOpen(false)}>
+          <div className={styles.composeModalWindow} style={{ maxWidth: 440 }} onClick={e => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <span className={styles.modalTitle}>
+                <span>Keyboard Shortcuts</span>
+              </span>
+              <button className={styles.modalCloseBtn} onClick={() => setIsShortcutsOpen(false)}>
+                ✕
+              </button>
+            </div>
+            <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {[
+                { key: 'j / k', desc: 'Next / Previous message' },
+                { key: 'c', desc: 'Compose new email' },
+                { key: 'r', desc: 'Reply to open thread' },
+                { key: 'e', desc: 'Archive conversation' },
+                { key: 's', desc: 'Star / Unstar message' },
+                { key: 'Delete', desc: 'Move conversation to Trash' },
+                { key: 'Esc', desc: 'Close any open modal or composer' },
+                { key: '?', desc: 'Toggle keyboard shortcuts menu' },
+              ].map((sc, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 12.5, borderBottom: '1px solid #1e293b', paddingBottom: 6 }}>
+                  <span style={{ color: '#cbd5e1' }}>{sc.desc}</span>
+                  <kbd style={{ padding: '2px 8px', background: '#162032', border: '1px solid #273549', borderRadius: 4, color: '#38bdf8', fontFamily: 'monospace' }}>
+                    {sc.key}
+                  </kbd>
+                </div>
+              ))}
             </div>
           </div>
         </div>

@@ -17,12 +17,12 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 48px;
+  height: 52px;
   padding: 0 16px;
-  background-color: #0f172a;
+  background-color: #0d1322;
   border-bottom: 1px solid #1e293b;
   flex-shrink: 0;
-  z-index: 10;
+  z-index: 20;
 }
 
 .topBarLeft {
@@ -31,28 +31,10 @@
   gap: 16px;
 }
 
-.backLink {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  font-weight: 500;
-  color: #94a3b8;
-  text-decoration: none;
-  padding: 6px 10px;
-  border-radius: 6px;
-  transition: all 0.15s ease;
-}
-
-.backLink:hover {
-  color: #f8fafc;
-  background-color: #1e293b;
-}
-
 .appBrand {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   font-size: 14px;
   font-weight: 600;
   color: #f8fafc;
@@ -63,65 +45,282 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
   border-radius: 6px;
-  background-color: #2563eb;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
   color: #fff;
+  box-shadow: 0 1px 3px rgba(37, 99, 235, 0.3);
+}
+
+.brandDivider {
+  width: 1px;
+  height: 18px;
+  background-color: #1e293b;
+}
+
+.navBreadcrumbLinks {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.breadcrumbLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: #94a3b8;
+  text-decoration: none;
+  padding: 5px 9px;
+  border-radius: 6px;
+  transition: all 0.15s ease;
+}
+
+.breadcrumbLink:hover {
+  color: #f8fafc;
+  background-color: #162032;
 }
 
 .topBarRight {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
 }
 
-.automationBtn {
+/* Header Action Buttons */
+.headerActionBtn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
+  gap: 7px;
+  padding: 6px 11px;
   font-size: 12px;
   font-weight: 500;
-  color: #38bdf8;
-  background-color: rgba(56, 189, 248, 0.1);
-  border: 1px solid rgba(56, 189, 248, 0.25);
+  color: #cbd5e1;
+  background-color: #162032;
+  border: 1px solid #273549;
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
-.automationBtn:hover {
-  background-color: rgba(56, 189, 248, 0.18);
-  border-color: rgba(56, 189, 248, 0.4);
+.headerActionBtn:hover {
+  color: #ffffff;
+  background-color: #1e293b;
+  border-color: #3b82f6;
 }
 
-.userBadge {
+.headerCountBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: #38bdf8;
+  background-color: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  padding: 1px 6px;
+  border-radius: 10px;
+}
+
+.iconActionBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  background-color: #162032;
+  border: 1px solid #273549;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.iconActionBtn:hover {
+  color: #ffffff;
+  background-color: #1e293b;
+  border-color: #475569;
+}
+
+.iconActionBtnSpinning {
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* User Menu Button & Popover */
+.userMenuContainer {
+  position: relative;
+}
+
+.userMenuTrigger {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 12px;
-  color: #94a3b8;
+  padding: 4px 8px 4px 4px;
+  background-color: #162032;
+  border: 1px solid #273549;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  color: #cbd5e1;
+}
+
+.userMenuTrigger:hover {
+  border-color: #3b82f6;
+  background-color: #1a253a;
 }
 
 .userAvatar {
   width: 26px;
   height: 26px;
   border-radius: 50%;
-  background-color: #3b82f6;
-  color: #fff;
+  background: linear-gradient(135deg, #7c3aed, #4f46e5);
+  color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 11px;
   font-weight: 600;
+  position: relative;
+}
+
+.userStatusDot {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: #10b981;
+  border: 1.5px solid #0f172a;
+}
+
+.userMetaCompact {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  line-height: 1.1;
+  padding-right: 4px;
+}
+
+.userMetaName {
+  font-size: 12px;
+  font-weight: 600;
+  color: #f1f5f9;
+}
+
+.userMetaRole {
+  font-size: 10px;
+  color: #94a3b8;
+}
+
+.userDropdownMenu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 280px;
+  background-color: #0f172a;
+  border: 1px solid #273549;
+  border-radius: 10px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 50;
+  animation: fadeIn 0.15s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.userDropdownHeader {
+  padding: 12px 14px;
+  background-color: #162032;
+  border-bottom: 1px solid #1e293b;
+}
+
+.userDropdownName {
+  font-size: 13px;
+  font-weight: 600;
+  color: #f8fafc;
+}
+
+.userDropdownEmail {
+  font-size: 11.5px;
+  color: #64748b;
+  margin-top: 1px;
+}
+
+.userDropdownTier {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #a855f7;
+  background-color: rgba(168, 85, 247, 0.12);
+  border: 1px solid rgba(168, 85, 247, 0.25);
+  padding: 2px 7px;
+  border-radius: 4px;
+}
+
+.userDropdownSection {
+  padding: 6px;
+  border-bottom: 1px solid #1e293b;
+}
+
+.userDropdownLabel {
+  font-size: 10px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  padding: 6px 8px 4px;
+}
+
+.userDropdownItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 7px 8px;
+  background: none;
+  border: none;
+  border-radius: 5px;
+  font-size: 12px;
+  color: #cbd5e1;
+  text-align: left;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.12s ease;
+}
+
+.userDropdownItem:hover {
+  background-color: #1e293b;
+  color: #ffffff;
+}
+
+.userDropdownItemActive {
+  background-color: #172544;
+  color: #38bdf8;
+  font-weight: 500;
 }
 
 /* ── 3-Column Email Client Main Grid ────────────────────────────────── */
 .mailGrid {
   display: flex;
   flex: 1;
-  height: calc(100vh - 48px);
+  height: calc(100vh - 52px);
   overflow: hidden;
   background-color: #0b0f19;
 }
@@ -145,7 +344,7 @@
   justify-content: center;
   gap: 8px;
   width: 100%;
-  padding: 10px 14px;
+  padding: 9px 14px;
   background-color: #2563eb;
   color: #ffffff;
   border: none;
@@ -154,7 +353,7 @@
   font-weight: 600;
   cursor: pointer;
   transition: background-color 0.15s ease;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
@@ -175,7 +374,7 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 }
 
 .navFolderItem {
@@ -183,7 +382,7 @@
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  padding: 8px 10px;
+  padding: 7px 10px;
   background: transparent;
   border: none;
   border-radius: 6px;
@@ -453,6 +652,9 @@
 }
 
 .subjectText {
+  display: flex;
+  align-items: center;
+  gap: 5px;
   font-size: 13px;
   font-weight: 500;
   color: #94a3b8;
@@ -511,10 +713,10 @@
   color: #f59e0b;
 }
 
-.importantBadge {
+.importantTagIcon {
+  color: #f59e0b;
   display: inline-flex;
   align-items: center;
-  color: #eab308;
 }
 
 /* ── Column 3: Message Reader Pane ──────────────────────────────────── */
@@ -594,12 +796,15 @@
 }
 
 .folderIndicatorPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   font-size: 11px;
   font-weight: 600;
-  text-transform: uppercase;
-  color: #38bdf8;
-  background-color: rgba(56, 189, 248, 0.1);
-  border: 1px solid rgba(56, 189, 248, 0.25);
+  letter-spacing: 0.5px;
+  color: #94a3b8;
+  background-color: #162032;
+  border: 1px solid #273549;
   padding: 3px 8px;
   border-radius: 4px;
   flex-shrink: 0;
@@ -689,20 +894,24 @@
 }
 
 .aiPillBtn {
-  padding: 4px 10px;
-  background-color: rgba(56, 189, 248, 0.1);
-  border: 1px solid rgba(56, 189, 248, 0.25);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  background-color: rgba(56, 189, 248, 0.08);
+  border: 1px solid rgba(56, 189, 248, 0.22);
   border-radius: 5px;
   color: #7dd3fc;
-  font-size: 11px;
+  font-size: 11.5px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.12s ease;
 }
 
 .aiPillBtn:hover {
-  background-color: rgba(56, 189, 248, 0.2);
+  background-color: rgba(56, 189, 248, 0.18);
   color: #ffffff;
+  border-color: rgba(56, 189, 248, 0.4);
 }
 
 .aiSummaryBox {
@@ -921,6 +1130,9 @@
   font-size: 14px;
   font-weight: 600;
   color: #f8fafc;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .modalCloseBtn {
@@ -989,8 +1201,9 @@
   border-top: 1px solid #1e293b;
 }
 
+/* Redesigned Automation Rules Modal */
 .rulesModalWindow {
-  width: 820px;
+  width: 860px;
   max-width: 95vw;
   max-height: 90vh;
   background-color: #0f172a;
@@ -999,30 +1212,38 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
 }
 
 .rulesModalBody {
-  padding: 18px;
+  padding: 20px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 18px;
 }
 
+/* Human-Readable Rule Cards */
 .ruleCard {
-  background-color: #162032;
-  border: 1px solid #273549;
+  background-color: #141d2f;
+  border: 1px solid #233249;
   border-radius: 8px;
-  padding: 14px 16px;
+  padding: 16px 18px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
+  transition: border-color 0.15s ease;
+}
+
+.ruleCard:hover {
+  border-color: #3b82f6;
 }
 
 .ruleTopRow {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
+  gap: 14px;
 }
 
 .ruleNameText {
@@ -1034,15 +1255,202 @@
 .ruleDescText {
   font-size: 12px;
   color: #94a3b8;
+  margin-top: 2px;
 }
 
-.ruleConditionsBox {
-  font-size: 11px;
-  font-family: monospace;
-  color: #7dd3fc;
-  background-color: #0b1322;
-  padding: 6px 10px;
+.ruleControls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+/* Toggle Switch */
+.switchToggle {
+  position: relative;
+  display: inline-block;
+  width: 36px;
+  height: 20px;
+}
+
+.switchToggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.sliderRound {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #334155;
+  transition: 0.2s;
+  border-radius: 20px;
+}
+
+.sliderRound:before {
+  position: absolute;
+  content: "";
+  height: 14px;
+  width: 14px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.2s;
+  border-radius: 50%;
+}
+
+.switchToggle input:checked + .sliderRound {
+  background-color: #10b981;
+}
+
+.switchToggle input:checked + .sliderRound:before {
+  transform: translateX(16px);
+}
+
+/* Visual Conditions & Actions Display */
+.rulePipelineBox {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  background-color: #0b111e;
+  border: 1px solid #1e293b;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.pipelineRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pipelineLabel {
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 2px 6px;
   border-radius: 4px;
+}
+
+.pipelineLabelIf {
+  color: #38bdf8;
+  background-color: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+}
+
+.pipelineLabelThen {
+  color: #a855f7;
+  background-color: rgba(168, 85, 247, 0.12);
+  border: 1px solid rgba(168, 85, 247, 0.25);
+}
+
+.conditionChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  background-color: #162032;
+  border: 1px solid #273549;
+  color: #cbd5e1;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.actionChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  background-color: rgba(37, 99, 235, 0.15);
+  border: 1px solid rgba(37, 99, 235, 0.3);
+  color: #93c5fd;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.ruleMetaFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  color: #64748b;
+  border-top: 1px solid #1a253a;
+  padding-top: 8px;
+}
+
+.ruleMetaActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.textBtn {
+  background: none;
+  border: none;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: all 0.12s ease;
+}
+
+.textBtn:hover {
+  color: #f1f5f9;
+  background-color: #1e293b;
+}
+
+.textBtnDanger {
+  color: #f87171;
+}
+
+.textBtnDanger:hover {
+  color: #ef4444;
+  background-color: rgba(239, 68, 68, 0.1);
+}
+
+/* Preset template cards */
+.presetTemplatesGrid {
+  display: grid;
+  grid-templateColumns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.presetCard {
+  background-color: #131b2c;
+  border: 1px solid #233249;
+  border-radius: 6px;
+  padding: 10px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.12s ease;
+}
+
+.presetCard:hover {
+  background-color: #19243a;
+  border-color: #3b82f6;
+}
+
+.presetTitle {
+  font-size: 12px;
+  font-weight: 600;
+  color: #f1f5f9;
+}
+
+.presetDesc {
+  font-size: 10.5px;
+  color: #94a3b8;
+  margin-top: 2px;
+  line-height: 1.3;
 }
 
 .emptyState {
