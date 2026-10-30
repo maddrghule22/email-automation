@@ -76,16 +76,8 @@ export default function MailHivePage() {
     trash: 0,
   });
 
-  // User Profile & Tenant State
-  const [currentUser, setCurrentUser] = useState<CurrentUser>({
-    name: 'Yash Salunke',
-    email: 'admin@vorynex.com',
-    roleName: 'Super Admin',
-    tier: 4,
-    initials: 'YS',
-    activeBrick: 'Vorynex Enterprise',
-    availableBricks: [],
-  });
+  // User Profile & Tenant State (null by default for unauthenticated visitors)
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
@@ -160,7 +152,7 @@ export default function MailHivePage() {
     fetch('/api/v1/auth/me')
       .then(res => res.json())
       .then(json => {
-        if (json.data?.user) {
+        if (json.authenticated !== false && json.data?.user) {
           const u = json.data.user;
           const r = json.data.role;
           const b = json.data.databrick;
@@ -171,19 +163,23 @@ export default function MailHivePage() {
                 .join('')
                 .slice(0, 2)
                 .toUpperCase()
-            : 'YS';
+            : 'U';
           setCurrentUser({
             name: u.name,
             email: u.email,
             roleName: r?.name || 'Super Admin',
             tier: r?.tier || 4,
             initials,
-            activeBrick: b?.name || 'Vorynex Enterprise',
+            activeBrick: b?.name || 'Dedicated Workspace',
             availableBricks: json.data.availableDatabricks || [],
           });
+        } else {
+          setCurrentUser(null);
         }
       })
-      .catch(() => {});
+      .catch(() => {
+        setCurrentUser(null);
+      });
   }, []);
 
   // Switch Data Brick
@@ -199,6 +195,14 @@ export default function MailHivePage() {
     } catch (e) {
       showToast('Failed to switch Data Brick');
     }
+  };
+
+  // Sign out
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/v1/auth/logout', { method: 'POST' });
+    } catch (e) {}
+    window.location.href = '/';
   };
 
   // Fetch emails from D1 Edge backend
@@ -762,71 +766,125 @@ export default function MailHivePage() {
             <span style={{ fontSize: 13, fontWeight: 700 }}>?</span>
           </button>
 
-          {/* Refined User Menu */}
-          <div className={styles.userMenuContainer} ref={userMenuRef}>
-            <button
-              className={styles.userMenuTrigger}
-              onClick={() => setIsUserMenuOpen(prev => !prev)}
-              aria-label="User Account Menu"
-            >
-              <div className={styles.userAvatar}>
-                {currentUser.initials}
-                <span className={styles.userStatusDot} />
-              </div>
-              <div className={styles.userMetaCompact}>
-                <span className={styles.userMetaName}>{currentUser.name.split(' ')[0]}</span>
-                <span className={styles.userMetaRole}>Tier {currentUser.tier}</span>
-              </div>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7 }}>
-                <polyline points="6 9 12 15 18 9" />
-              </svg>
-            </button>
+          {/* Refined User Menu or Guest Action Buttons */}
+          {currentUser ? (
+            <div className={styles.userMenuContainer} ref={userMenuRef}>
+              <button
+                className={styles.userMenuTrigger}
+                onClick={() => setIsUserMenuOpen(prev => !prev)}
+                aria-label="User Account Menu"
+              >
+                <div className={styles.userAvatar}>
+                  {currentUser.initials}
+                  <span className={styles.userStatusDot} />
+                </div>
+                <div className={styles.userMetaCompact}>
+                  <span className={styles.userMetaName}>{currentUser.name.split(' ')[0]}</span>
+                  <span className={styles.userMetaRole}>Tier {currentUser.tier}</span>
+                </div>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7 }}>
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </button>
 
-            {/* Dropdown Menu */}
-            {isUserMenuOpen && (
-              <div className={styles.userDropdownMenu}>
-                <div className={styles.userDropdownHeader}>
-                  <div className={styles.userDropdownName}>{currentUser.name}</div>
-                  <div className={styles.userDropdownEmail}>{currentUser.email}</div>
-                  <div className={styles.userDropdownTier}>
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                    </svg>
-                    <span>{currentUser.roleName} (Power {currentUser.tier === 4 ? '100' : '75'})</span>
+              {/* Dropdown Menu */}
+              {isUserMenuOpen && (
+                <div className={styles.userDropdownMenu}>
+                  <div className={styles.userDropdownHeader}>
+                    <div className={styles.userDropdownName}>{currentUser.name}</div>
+                    <div className={styles.userDropdownEmail}>{currentUser.email}</div>
+                    <div className={styles.userDropdownTier}>
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                      </svg>
+                      <span>{currentUser.roleName} (Power {currentUser.tier === 4 ? '100' : '75'})</span>
+                    </div>
+                  </div>
+
+                  <div className={styles.userDropdownSection}>
+                    <div className={styles.userDropdownLabel}>Active Data Brick</div>
+                    {currentUser.availableBricks.map(b => (
+                      <button
+                        key={b.id}
+                        className={`${styles.userDropdownItem} ${currentUser.activeBrick === b.name ? styles.userDropdownItemActive : ''}`}
+                        onClick={() => handleSwitchBrick(b.id)}
+                      >
+                        <span>{b.name}</span>
+                        {currentUser.activeBrick === b.name && <span>✓</span>}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className={styles.userDropdownSection}>
+                    <Link href="/exceptions" className={styles.userDropdownItem}>
+                      <span>Sign-off &amp; Approvals</span>
+                      <span style={{ fontSize: 10, color: '#94a3b8' }}>Tier {currentUser.tier}</span>
+                    </Link>
+                    <Link href="/customers" className={styles.userDropdownItem}>
+                      <span>Data Bricks &amp; Settings</span>
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className={styles.userDropdownItem}
+                      style={{ color: '#f87171', width: '100%', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer' }}
+                    >
+                      <span>Sign Out</span>
+                    </button>
                   </div>
                 </div>
-
-                <div className={styles.userDropdownSection}>
-                  <div className={styles.userDropdownLabel}>Active Data Brick</div>
-                  {currentUser.availableBricks.map(b => (
-                    <button
-                      key={b.id}
-                      className={`${styles.userDropdownItem} ${currentUser.activeBrick === b.name ? styles.userDropdownItemActive : ''}`}
-                      onClick={() => handleSwitchBrick(b.id)}
-                    >
-                      <span>{b.name}</span>
-                      {currentUser.activeBrick === b.name && <span>✓</span>}
-                    </button>
-                  ))}
-                </div>
-
-                <div className={styles.userDropdownSection}>
-                  <Link href="/exceptions" className={styles.userDropdownItem}>
-                    <span>Sign-off & Approvals</span>
-                    <span style={{ fontSize: 10, color: '#94a3b8' }}>Tier {currentUser.tier}</span>
-                  </Link>
-                  <Link href="/customers" className={styles.userDropdownItem}>
-                    <span>Data Bricks & Settings</span>
-                  </Link>
-                  <Link href="/login" className={styles.userDropdownItem} style={{ color: '#f87171' }}>
-                    <span>Sign Out</span>
-                  </Link>
-                </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Link href="/login" style={{
+                padding: '6px 12px',
+                borderRadius: '6px',
+                border: '1px solid #334155',
+                color: '#cbd5e1',
+                fontSize: '12px',
+                fontWeight: 500,
+                textDecoration: 'none',
+              }}>
+                Sign In
+              </Link>
+              <Link href="/register" style={{
+                padding: '6px 12px',
+                borderRadius: '6px',
+                background: '#2563eb',
+                color: '#ffffff',
+                fontSize: '12px',
+                fontWeight: 600,
+                textDecoration: 'none',
+              }}>
+                Create Workspace
+              </Link>
+            </div>
+          )}
         </div>
       </header>
+
+      {/* Guest Preview Mode Notice */}
+      {!currentUser && (
+        <div style={{
+          background: 'rgba(37, 99, 235, 0.1)',
+          borderBottom: '1px solid rgba(59, 130, 246, 0.25)',
+          padding: '8px 24px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          fontSize: '12px',
+          color: '#93c5fd',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span>⚡</span>
+            <span>You are browsing in guest preview. Create a workspace or sign in to provision your dedicated D1 Data Brick.</span>
+          </div>
+          <Link href="/register" style={{ fontWeight: 600, color: '#ffffff', textDecoration: 'underline' }}>
+            Create Workspace &rarr;
+          </Link>
+        </div>
+      )}
 
       {/* ── 3-Column Email Client Main Grid ── */}
       <div className={styles.mailGrid}>

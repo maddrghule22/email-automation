@@ -1,4 +1,5 @@
 'use client';
+
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -20,185 +21,100 @@ export default function LoginPage() {
       const res = await fetch('/api/v1/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
       });
 
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error?.message || 'Failed to login');
+        throw new Error(data.error?.message || 'Invalid email or password.');
       }
 
-      router.push('/overview'); // Redirect to main dashboard on success
+      router.push('/inbox');
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || 'Authentication failed. Please verify credentials.');
       setLoading(false);
     }
   };
 
-  const fillCredentials = (userEmail: string) => {
-    setEmail(userEmail);
-    setPassword('admin123');
-  };
-
   return (
     <>
-      <h1 className={styles.title}>Sign in to your account</h1>
-      
+      <div style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
+        <h1 className={styles.title} style={{ fontSize: '1.4rem', fontWeight: 700, color: '#f8fafc', marginBottom: '4px' }}>
+          Sign In to Workspace
+        </h1>
+        <p style={{ fontSize: '12px', color: '#94a3b8' }}>
+          Connect to your dedicated Cloudflare D1 Data Brick
+        </p>
+      </div>
+
       {error && (
         <div style={{
-          backgroundColor: '#fee2e2',
-          border: '1px solid #fecaca',
-          color: '#b91c1c',
+          backgroundColor: 'rgba(239, 68, 68, 0.12)',
+          border: '1px solid rgba(239, 68, 68, 0.3)',
+          color: '#f87171',
           padding: '10px 14px',
           borderRadius: '8px',
-          fontSize: '13px',
+          fontSize: '12px',
           marginBottom: '1rem',
-          textAlign: 'center'
+          textAlign: 'center',
         }}>
           {error}
         </div>
       )}
 
-      {/* D1 Hierarchy Power Accounts Box */}
-      <div style={{
-        backgroundColor: '#eff6ff',
-        border: '1px solid #bfdbfe',
-        borderRadius: '10px',
-        padding: '12px 14px',
-        marginBottom: '1.25rem',
-        fontSize: '12px',
-        color: '#1e40af',
-      }}>
-        <div style={{ fontWeight: 600, marginBottom: '6px' }}>
-          Unified D1 Database — Select Role &amp; Data Brick:
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '6px' }}>
-          <button
-            type="button"
-            onClick={() => fillCredentials('admin@vorynex.com')}
-            style={{
-              padding: '6px 8px',
-              backgroundColor: '#7c3aed',
-              color: '#fff',
-              borderRadius: '6px',
-              fontSize: '11px',
-              fontWeight: 600,
-              border: 'none',
-              cursor: 'pointer',
-              textAlign: 'left'
-            }}
-          >
-            ⚡ Level 4: Super Admin
-          </button>
-          <button
-            type="button"
-            onClick={() => fillCredentials('sarah.ops@vorynex.com')}
-            style={{
-              padding: '6px 8px',
-              backgroundColor: '#2563eb',
-              color: '#fff',
-              borderRadius: '6px',
-              fontSize: '11px',
-              fontWeight: 600,
-              border: 'none',
-              cursor: 'pointer',
-              textAlign: 'left'
-            }}
-          >
-            🛡️ Level 3: Ops Manager
-          </button>
-          <button
-            type="button"
-            onClick={() => fillCredentials('alex.dev@vorynex.com')}
-            style={{
-              padding: '6px 8px',
-              backgroundColor: '#059669',
-              color: '#fff',
-              borderRadius: '6px',
-              fontSize: '11px',
-              fontWeight: 600,
-              border: 'none',
-              cursor: 'pointer',
-              textAlign: 'left'
-            }}
-          >
-            ⚙️ Level 2: Operator
-          </button>
-          <button
-            type="button"
-            onClick={() => fillCredentials('david.audit@vorynex.com')}
-            style={{
-              padding: '6px 8px',
-              backgroundColor: '#d97706',
-              color: '#fff',
-              borderRadius: '6px',
-              fontSize: '11px',
-              fontWeight: 600,
-              border: 'none',
-              cursor: 'pointer',
-              textAlign: 'left'
-            }}
-          >
-            👁️ Level 1: Auditor
-          </button>
-        </div>
-      </div>
-
       <form className={styles.form} onSubmit={handleLogin}>
         <div className={styles.inputGroup}>
-          <label htmlFor="email">Email Address</label>
-          <input 
-            type="email" 
-            id="email" 
-            name="email" 
-            placeholder="admin@vorynex.com" 
+          <label htmlFor="email">Work Email Address</label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            placeholder="alex.morgan@company.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            required 
+            required
+            autoFocus
           />
         </div>
-        
+
         <div className={styles.inputGroup}>
           <label htmlFor="password">Password</label>
-          <input 
-            type="password" 
-            id="password" 
-            name="password" 
-            placeholder="••••••••" 
+          <input
+            type="password"
+            id="password"
+            name="password"
+            placeholder="••••••••"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            required 
+            required
           />
         </div>
-        
-        <Link href="/forgot-password" className={styles.link}>
-          Forgot password?
-        </Link>
-        
-        <button 
-          type="submit" 
-          disabled={loading} 
-          style={{ 
-            backgroundColor: '#2563eb', 
-            color: 'white', 
-            padding: '0.75rem', 
-            borderRadius: '8px', 
-            border: 'none', 
-            fontWeight: 600, 
-            cursor: 'pointer', 
-            marginTop: '1rem',
+
+        <button
+          type="submit"
+          disabled={loading}
+          style={{
+            backgroundColor: '#2563eb',
+            color: 'white',
+            padding: '0.75rem',
+            borderRadius: '8px',
+            border: 'none',
+            fontWeight: 600,
+            cursor: loading ? 'not-allowed' : 'pointer',
+            marginTop: '0.75rem',
             width: '100%',
-            transition: 'background 0.2s'
+            opacity: loading ? 0.7 : 1,
+            transition: 'background 0.2s',
           }}
         >
           {loading ? 'Authenticating with D1...' : 'Sign In'}
         </button>
       </form>
-      
-      <p className={styles.footerText}>
-        Don&apos;t have an account?{' '}
+
+      <p className={styles.footerText} style={{ marginTop: '1.5rem' }}>
+        First time visiting?{' '}
         <Link href="/register" className={styles.link}>
-          Request Access
+          Create Dedicated Workspace
         </Link>
       </p>
     </>

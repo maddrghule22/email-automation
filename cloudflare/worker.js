@@ -98,19 +98,102 @@ function getCookie(request, name) {
   return match ? decodeURIComponent(match[3]) : null;
 }
 
-function resolveSessionUser(request) {
+async function resolveSessionUser(request, env) {
   const roleHeader = request.headers.get('x-user-role');
   const cookieRole = getCookie(request, 'user_role');
-  const roleKey = (roleHeader || cookieRole || 'SUPER_ADMIN').toUpperCase();
-
-  const user = USERS[roleKey] || USERS.SUPER_ADMIN;
-  const role = ROLES[roleKey] || ROLES.SUPER_ADMIN;
-
+  const cookieUserId = getCookie(request, 'user_id');
   const brickHeader = request.headers.get('x-databrick-id');
   const cookieBrick = getCookie(request, 'databrick_id');
-  const tenantId = brickHeader || cookieBrick || user.tenantId;
+  const cookieName = getCookie(request, 'user_name');
+  const cookieEmail = getCookie(request, 'user_email');
 
-  return { user, role, tenantId };
+  // If no credentials or cookies exist, visitor is strictly unauthenticated
+  if (!roleHeader && !cookieRole && !cookieUserId && !cookieEmail) {
+    return { user: null, role: null, tenantId: null, tenantName: null, isAuthenticated: false };
+  }
+
+  const roleKey = (roleHeader || cookieRole || 'SUPER_ADMIN').toUpperCase();
+  const role = ROLES[roleKey] || ROLES.SUPER_ADMIN;
+
+  let user = null;
+  let tenantId = brickHeader || cookieBrick || null;
+  let tenantName = 'Default Workspace';
+
+  // Attempt to look up user from D1 database
+  if (env && env.DB && cookieUserId) {
+    try {
+      const uRow = await env.DB.prepare('SELECT id, email, name, roleId FROM users WHERE id = ?').bind(cookieUserId).first();
+      if (uRow) {
+        user = {
+          id: uRow.id,
+          email: uRow.email,
+          name: uRow.name,
+          roleKey,
+        };
+      }
+    } catch (e) {
+      console.error('Error querying user from D1:', e);
+    }
+  }
+
+  if (!user && env && env.DB && cookieEmail) {
+    try {
+      const uRow = await env.DB.prepare('SELECT id, email, name, roleId FROM users WHERE LOWER(email) = ?').bind(decodeURIComponent(cookieEmail).toLowerCase()).first();
+      if (uRow) {
+        user = {
+          id: uRow.id,
+          email: uRow.email,
+          name: uRow.name,
+          roleKey,
+        };
+      }
+    } catch (e) {
+      console.error('Error querying user by email from D1:', e);
+    }
+  }
+
+  // If user registered with cookies
+  if (!user && (cookieName || cookieEmail)) {
+    user = {
+      id: cookieUserId || `user-${Date.now()}`,
+      email: cookieEmail ? decodeURIComponent(cookieEmail) : 'user@example.com',
+      name: cookieName ? decodeURIComponent(cookieName) : 'Workspace User',
+      roleKey,
+    };
+  }
+
+  // Lookup tenant membership
+  if (user && !tenantId && env && env.DB) {
+    try {
+      const mem = await env.DB.prepare('SELECT tenantId FROM memberships WHERE userId = ?').bind(user.id).first();
+      if (mem) {
+        tenantId = mem.tenantId;
+      }
+    } catch (e) {}
+  }
+
+  // Lookup tenant name
+  if (tenantId && env && env.DB) {
+    try {
+      const tRow = await env.DB.prepare('SELECT name FROM tenants WHERE id = ?').bind(tenantId).first();
+      if (tRow) {
+        tenantName = tRow.name;
+      }
+    } catch (e) {}
+  }
+
+  // Fallback ONLY if role was explicitly provided in header
+  if (!user && roleHeader && USERS[roleKey]) {
+    user = USERS[roleKey];
+    tenantId = tenantId || user.tenantId;
+  }
+
+  if (!user) {
+    return { user: null, role: null, tenantId: null, tenantName: null, isAuthenticated: false };
+  }
+
+  tenantId = tenantId || `tenant-${user.id || 'default'}`;
+  return { user, role, tenantId, tenantName, isAuthenticated: true };
 }
 
 // Rule evaluation helper
@@ -166,7 +249,7 @@ export default {
     // -------------------------------------------------------------
     if (pathname.startsWith('/api/')) {
       try {
-        const { user, role, tenantId } = resolveSessionUser(request);
+        const { user, role, tenantId, tenantName, isAuthenticated } = await resolveSessionUser(request, env);
 
         // 1. Health check
         if (pathname === '/api/v1/health' || pathname === '/api/v1/ready') {
@@ -176,11 +259,20 @@ export default {
             d1: !!env.DB,
             region: request.cf?.colo || 'EDGE',
             activeTenant: tenantId,
+            authenticated: isAuthenticated,
           });
         }
 
         // 2. Auth: /api/v1/auth/me
         if (pathname === '/api/v1/auth/me') {
+          if (!isAuthenticated || !user) {
+            return jsonResponse({
+              authenticated: false,
+              data: null,
+              message: 'Unauthenticated visitor',
+            });
+          }
+
           let tenantsList = [];
           if (env.DB) {
             try {
@@ -191,18 +283,20 @@ export default {
             }
           }
 
-          if (tenantsList.length === 0) {
+          if (tenantsList.length === 0 && tenantId) {
             tenantsList = [
-              { id: 'tenant-vorynex-prod', name: 'Vorynex Enterprise', slug: 'vorynex-enterprise' },
-              { id: 'tenant-ops-brick', name: 'Nexus Operations & Supply Chain', slug: 'nexus-operations' },
-              { id: 'tenant-dev-brick', name: 'Apex Logistics Fleet & Fulfillment', slug: 'apex-logistics' },
-              { id: 'tenant-audit-brick', name: 'SecureTrust Regulatory & Compliance', slug: 'securetrust-audit' },
+              { id: tenantId, name: tenantName || 'My Workspace', slug: 'my-workspace' }
             ];
           }
 
-          const activeBrick = tenantsList.find(t => t.id === tenantId) || tenantsList[0];
+          const activeBrick = tenantsList.find(t => t.id === tenantId) || tenantsList[0] || {
+            id: tenantId,
+            name: tenantName || 'My Workspace',
+            slug: 'my-workspace'
+          };
 
           return jsonResponse({
+            authenticated: true,
             data: {
               user: {
                 id: user.id,
@@ -224,82 +318,233 @@ export default {
           });
         }
 
-        // 3. Auth: /api/v1/auth/switch-brick
-        if (pathname === '/api/v1/auth/switch-brick' && method === 'POST') {
-          const body = await request.json().catch(() => ({}));
-          const newRoleKey = (body.roleKey || 'SUPER_ADMIN').toUpperCase();
-          const targetUser = USERS[newRoleKey] || USERS.SUPER_ADMIN;
-          const targetRole = ROLES[newRoleKey] || ROLES.SUPER_ADMIN;
-          const targetBrick = body.tenantId || targetUser.tenantId;
-
-          const cookieOptions = 'Path=/; Max-Age=2592000; SameSite=Lax';
-          const headers = {
-            'Set-Cookie': `user_role=${newRoleKey}; ${cookieOptions}`,
-          };
+        // 3. Auth: /api/v1/auth/logout
+        if (pathname === '/api/v1/auth/logout') {
+          const cookieOptions = 'Path=/; Max-Age=0; SameSite=Lax';
+          const headers = new Headers();
+          headers.append('Set-Cookie', `user_role=; ${cookieOptions}`);
+          headers.append('Set-Cookie', `user_id=; ${cookieOptions}`);
+          headers.append('Set-Cookie', `databrick_id=; ${cookieOptions}`);
+          headers.append('Set-Cookie', `user_name=; ${cookieOptions}`);
+          headers.append('Set-Cookie', `user_email=; ${cookieOptions}`);
+          headers.append('Set-Cookie', `session_token=; ${cookieOptions}`);
 
           return jsonResponse({
             success: true,
-            message: `Switched context to ${targetRole.name} on databrick ${targetBrick}`,
+            message: 'Signed out successfully.',
+          }, 200, headers);
+        }
+
+        // 4. Auth: /api/v1/auth/switch-brick
+        if (pathname === '/api/v1/auth/switch-brick' && method === 'POST') {
+          const body = await request.json().catch(() => ({}));
+          const targetBrick = body.tenantId || tenantId;
+          const targetRoleKey = (body.roleKey || role.key).toUpperCase();
+          const targetRole = ROLES[targetRoleKey] || ROLES.SUPER_ADMIN;
+
+          const cookieOptions = 'Path=/; Max-Age=2592000; SameSite=Lax';
+          const headers = new Headers();
+          headers.append('Set-Cookie', `databrick_id=${targetBrick}; ${cookieOptions}`);
+          headers.append('Set-Cookie', `user_role=${targetRoleKey}; ${cookieOptions}`);
+
+          return jsonResponse({
+            success: true,
+            message: `Switched context to databrick ${targetBrick}`,
             data: {
-              user: targetUser,
               role: targetRole,
               databrickId: targetBrick,
             },
           }, 200, headers);
         }
 
-        // 4. Auth: /api/v1/auth/login
+        // 5. Auth: /api/v1/auth/login
         if (pathname === '/api/v1/auth/login' && method === 'POST') {
           const body = await request.json().catch(() => ({}));
-          const email = (body.email || '').toLowerCase();
-          
-          let matchedRoleKey = 'SUPER_ADMIN';
-          if (email.includes('ops') || email.includes('sarah')) matchedRoleKey = 'OPERATIONS_MANAGER';
-          else if (email.includes('dev') || email.includes('alex') || email.includes('operator')) matchedRoleKey = 'AUTOMATION_OPERATOR';
-          else if (email.includes('audit') || email.includes('david')) matchedRoleKey = 'COMPLIANCE_AUDITOR';
+          const email = (body.email || '').trim().toLowerCase();
+          const password = body.password || '';
 
-          const sessionUser = USERS[matchedRoleKey];
-          const sessionRole = ROLES[matchedRoleKey];
+          if (!email) {
+            return jsonResponse({
+              error: { message: 'Email address is required.' }
+            }, 400);
+          }
 
-          const cookieOptions = 'Path=/; Max-Age=2592000; SameSite=Lax';
-          return jsonResponse({
-            token: `vorynex_token_${matchedRoleKey}_${Date.now()}`,
-            user: sessionUser,
-            role: sessionRole,
-          }, 200, {
-            'Set-Cookie': `user_role=${matchedRoleKey}; ${cookieOptions}`,
-          });
-        }
-
-        // 5. Auth: /api/v1/auth/register
-        if (pathname === '/api/v1/auth/register' && method === 'POST') {
-          const body = await request.json().catch(() => ({}));
-          const orgName = body.organizationName || `${body.name || 'User'}'s Databrick`;
-          const slug = orgName.toLowerCase().replace(/[^a-z0-9]/g, '-');
-          const newTenantId = `tenant-${Date.now()}`;
-          const newUserId = `user-${Date.now()}`;
+          let loggedInUser = null;
+          let userTenantId = null;
+          let userOrgName = 'My Workspace';
+          let roleKey = 'SUPER_ADMIN';
 
           if (env.DB) {
             try {
-              await env.DB.prepare(
-                'INSERT INTO tenants (id, name, slug) VALUES (?, ?, ?)'
-              ).bind(newTenantId, orgName, slug).run();
+              const dbUser = await env.DB.prepare('SELECT id, email, name, passwordHash, roleId FROM users WHERE LOWER(email) = ?').bind(email).first();
+              if (dbUser) {
+                loggedInUser = {
+                  id: dbUser.id,
+                  email: dbUser.email,
+                  name: dbUser.name,
+                };
 
-              await env.DB.prepare(
-                'INSERT INTO users (id, email, name, passwordHash, roleId) VALUES (?, ?, ?, ?, ?)'
-              ).bind(newUserId, body.email || 'user@example.com', body.name || 'New User', 'hash', 'role-super-admin').run();
-
-              await env.DB.prepare(
-                'INSERT INTO workflows (id, tenantId, name, description, triggerType, status, totalExecutions, successRatePercent) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
-              ).bind(`wf-${Date.now()}-1`, newTenantId, 'Inbound PDF Invoices OCR Dispatcher', 'Extracts AP line items and posts into ERP', 'WEBHOOK', 'ACTIVE', 142, 99.8).run();
-
-              await env.DB.prepare(
-                'INSERT INTO integrations (id, tenantId, name, type, status, healthScore, latencyMs) VALUES (?, ?, ?, ?, ?, ?, ?)'
-              ).bind(`int-${Date.now()}-1`, newTenantId, 'Corporate ERP Gateway', 'ERP', 'CONNECTED', 100, 42).run();
-            } catch (err) {
-              console.error('D1 Provisioning Error:', err);
+                const mem = await env.DB.prepare('SELECT tenantId, roleId FROM memberships WHERE userId = ?').bind(dbUser.id).first();
+                if (mem) {
+                  userTenantId = mem.tenantId;
+                  const tRow = await env.DB.prepare('SELECT name FROM tenants WHERE id = ?').bind(userTenantId).first();
+                  if (tRow) userOrgName = tRow.name;
+                }
+              }
+            } catch (e) {
+              console.error('Error logging in user from D1:', e);
             }
           }
+
+          // Fallback demo matching if database has no records yet
+          if (!loggedInUser && (email.includes('admin') || email.includes('vorynex'))) {
+            loggedInUser = { id: 'usr-demo-admin', email, name: 'Workspace Admin' };
+            userTenantId = 'brick-demo';
+            userOrgName = 'Vorynex Enterprise';
+          }
+
+          if (!loggedInUser) {
+            return jsonResponse({
+              error: { message: 'Account not found. Please create a new workspace to get started.' }
+            }, 401);
+          }
+
+          const sessionRole = ROLES[roleKey] || ROLES.SUPER_ADMIN;
+          const cookieOptions = 'Path=/; Max-Age=2592000; SameSite=Lax';
+          const headers = new Headers();
+          headers.append('Set-Cookie', `user_id=${loggedInUser.id}; ${cookieOptions}`);
+          headers.append('Set-Cookie', `databrick_id=${userTenantId || 'brick-default'}; ${cookieOptions}`);
+          headers.append('Set-Cookie', `user_role=${roleKey}; ${cookieOptions}`);
+          headers.append('Set-Cookie', `user_name=${encodeURIComponent(loggedInUser.name)}; ${cookieOptions}`);
+          headers.append('Set-Cookie', `user_email=${encodeURIComponent(loggedInUser.email)}; ${cookieOptions}`);
+
+          return jsonResponse({
+            token: `token_${loggedInUser.id}_${Date.now()}`,
+            user: loggedInUser,
+            role: sessionRole,
+            databrickId: userTenantId,
+            organization: userOrgName,
+          }, 200, headers);
+        }
+
+        // 6. Auth: /api/v1/auth/register
+        if (pathname === '/api/v1/auth/register' && method === 'POST') {
+          const body = await request.json().catch(() => ({}));
+          const name = (body.name || body.userName || '').trim() || 'Workspace Admin';
+          const email = (body.email || '').trim().toLowerCase();
+          const orgName = (body.organizationName || `${name}'s Workspace`).trim();
+          const slug = orgName.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');
+          const newTenantId = `brick-${Date.now()}`;
+          const newUserId = `usr-${Date.now()}`;
+          const roleId = 'role-super-admin';
+          const roleKey = 'SUPER_ADMIN';
+
+          if (!email) {
+            return jsonResponse({
+              error: { message: 'Email address is required.' }
+            }, 400);
+          }
+
+          if (env.DB) {
+            try {
+              // 1. Provision Tenant (Dedicated Data Brick)
+              await env.DB.prepare(
+                'INSERT INTO tenants (id, name, slug, status) VALUES (?, ?, ?, ?)'
+              ).bind(newTenantId, orgName, slug, 'Active').run();
+
+              // 2. Create User
+              await env.DB.prepare(
+                'INSERT INTO users (id, email, name, passwordHash, roleId, status) VALUES (?, ?, ?, ?, ?, ?)'
+              ).bind(newUserId, email, name, 'hashed_secure', roleId, 'ACTIVE').run();
+
+              // 3. Create Membership with Level 4 Super Admin
+              await env.DB.prepare(
+                'INSERT INTO memberships (id, userId, tenantId, roleId, status) VALUES (?, ?, ?, ?, ?)'
+              ).bind(`mem-${Date.now()}`, newUserId, newTenantId, roleId, 'Active').run();
+
+              // 4. Provision personalized welcome email in their fresh inbox
+              const welcomeId = `em-welcome-${Date.now()}`;
+              await env.DB.prepare(`
+                INSERT INTO emails (
+                  id, tenantId, senderName, senderEmail, recipientEmail,
+                  subject, snippet, body, folder, isRead, isStarred, isImportant, labels, avatarUrl
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+              `).bind(
+                welcomeId,
+                newTenantId,
+                'MailHive Operations',
+                'system@vorynex.ai',
+                email,
+                `Welcome to ${orgName} — Dedicated Data Brick Initialized`,
+                `Your autonomous email operations workspace is provisioned with Level 4 Super Admin controls...`,
+                `Hi ${name},
+
+Welcome to your dedicated enterprise workspace on MailHive.
+
+Your isolated Cloudflare D1 Data Brick has been initialized and assigned to your organization:
+• Workspace Name: ${orgName}
+• Data Brick ID: ${newTenantId}
+• Administrator: ${name} (${email})
+• Hierarchy Tier: Level 4 Super Admin / Managing Director ($1,000,000+ Signing Authority)
+• Status: Active & Operational
+
+Platform Capabilities Ready to Use:
+1. Rules & Triggers: Build IF/THEN automation pipelines to triage, auto-label, and dispatch inbound correspondence.
+2. AI-Assisted Operations: Real-time thread summarization, tone-configurable reply drafting, and automatic deadline extraction.
+3. Multi-Tier RBAC: Complete governance with Level 1 to Level 4 power access specifiers.
+4. Accounts Payable & OCR: Seamlessly handle invoice exceptions and ERP remittance syncing.
+
+To get started, try composing a message, creating an automation rule, or exploring your inbox shortcuts.
+
+Warm regards,
+MailHive Automated Operations
+Vorynex Technologies`,
+                'inbox',
+                0,
+                1,
+                1,
+                JSON.stringify(['Welcome', 'System']),
+                'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=100&auto=format&fit=crop&q=80'
+              ).run();
+
+              // 5. Seed default starter automation rule for their workspace
+              await env.DB.prepare(`
+                INSERT INTO email_rules (
+                  id, tenantId, name, description, triggerType, conditionLogic, conditions, actions, isEnabled, executionCount, requireApprovalBeforeSend
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+              `).bind(
+                `rule-starter-${Date.now()}`,
+                newTenantId,
+                'Auto-Flag Urgent Inquiries',
+                'Automatically labels incoming messages with "Urgent" when subject contains priority keywords',
+                'ON_RECEIVE',
+                'OR',
+                JSON.stringify([
+                  { field: 'subject', operator: 'contains', value: 'urgent' },
+                  { field: 'subject', operator: 'contains', value: 'asap' },
+                  { field: 'subject', operator: 'contains', value: 'priority' }
+                ]),
+                JSON.stringify([
+                  { action: 'apply_label', value: 'Urgent' },
+                  { action: 'mark_important', value: true }
+                ]),
+                1,
+                0,
+                0
+              ).run();
+            } catch (err) {
+              console.error('D1 Provisioning Error during register:', err);
+            }
+          }
+
+          // Set session cookies for instant login
+          const cookieOptions = 'Path=/; Max-Age=2592000; SameSite=Lax';
+          const headers = new Headers();
+          headers.append('Set-Cookie', `user_id=${newUserId}; ${cookieOptions}`);
+          headers.append('Set-Cookie', `databrick_id=${newTenantId}; ${cookieOptions}`);
+          headers.append('Set-Cookie', `user_role=${roleKey}; ${cookieOptions}`);
+          headers.append('Set-Cookie', `user_name=${encodeURIComponent(name)}; ${cookieOptions}`);
+          headers.append('Set-Cookie', `user_email=${encodeURIComponent(email)}; ${cookieOptions}`);
 
           return jsonResponse({
             success: true,
@@ -308,15 +553,26 @@ export default {
               userId: newUserId,
               tenantId: newTenantId,
               organization: orgName,
+              user: {
+                id: newUserId,
+                email,
+                name,
+                role: roleKey,
+              },
+              databrick: {
+                id: newTenantId,
+                name: orgName,
+                slug,
+              },
             },
-          }, 201);
+          }, 201, headers);
         }
 
         // =============================================================
         // EMAIL CLIENT & AUTOMATION API ENDPOINTS
         // =============================================================
 
-        // 6. Emails list: GET /api/v1/emails
+        // 7. Emails list: GET /api/v1/emails
         if (pathname === '/api/v1/emails' && method === 'GET') {
           const folder = url.searchParams.get('folder') || 'inbox';
           const filter = url.searchParams.get('filter') || 'all';
@@ -335,10 +591,21 @@ export default {
             trash: 0,
           };
 
+          if (!tenantId || !isAuthenticated) {
+            return jsonResponse({
+              data: [],
+              total: 0,
+              unreadCount: 0,
+              folderCounts,
+              activeFolder: folder,
+              unauthenticated: true,
+            });
+          }
+
           if (env.DB) {
             try {
-              // Calculate folder counts in D1
-              const allRows = await env.DB.prepare('SELECT id, folder, isRead, isStarred, isImportant, snoozedUntil FROM emails').all();
+              // Calculate folder counts in D1 strictly for THIS tenantId!
+              const allRows = await env.DB.prepare('SELECT id, folder, isRead, isStarred, isImportant, snoozedUntil FROM emails WHERE tenantId = ?').bind(tenantId).all();
               const rows = allRows.results || [];
 
               folderCounts.all = rows.length;
@@ -353,9 +620,9 @@ export default {
                 if (r.snoozedUntil) folderCounts.snoozed++;
               }
 
-              // Build query for requested folder
-              let query = 'SELECT * FROM emails WHERE 1=1';
-              const params = [];
+              // Build query for requested folder strictly filtered by tenantId
+              let query = 'SELECT * FROM emails WHERE tenantId = ?';
+              const params = [tenantId];
 
               if (folder === 'starred') {
                 query += ' AND isStarred = 1';
@@ -508,9 +775,9 @@ export default {
 
           const newEmail = {
             id,
-            tenantId,
-            senderName: user.name || 'You',
-            senderEmail: user.email || 'yash@vorynex.com',
+            tenantId: tenantId || 'brick-default',
+            senderName: user ? user.name : (body.fromName || 'Workspace User'),
+            senderEmail: user ? user.email : (body.fromEmail || 'user@vorynex.ai'),
             recipientEmail: body.to || '',
             ccEmails: body.cc || null,
             bccEmails: body.bcc || null,
@@ -607,8 +874,8 @@ export default {
         // 9. Automation Rules: GET /api/v1/emails/rules
         if (pathname === '/api/v1/emails/rules' && method === 'GET') {
           let rules = [];
-          if (env.DB) {
-            const res = await env.DB.prepare('SELECT * FROM email_rules ORDER BY createdAt DESC').all();
+          if (env.DB && tenantId) {
+            const res = await env.DB.prepare('SELECT * FROM email_rules WHERE tenantId = ? ORDER BY createdAt DESC').bind(tenantId).all();
             rules = (res.results || []).map(r => ({
               ...r,
               isEnabled: Boolean(r.isEnabled),
@@ -768,8 +1035,8 @@ export default {
         // 14. Automation Executions History: GET /api/v1/emails/rules/executions
         if (pathname === '/api/v1/emails/rules/executions' && method === 'GET') {
           let executions = [];
-          if (env.DB) {
-            const res = await env.DB.prepare('SELECT * FROM email_rule_executions ORDER BY createdAt DESC LIMIT 50').all();
+          if (env.DB && tenantId) {
+            const res = await env.DB.prepare('SELECT * FROM email_rule_executions WHERE tenantId = ? ORDER BY createdAt DESC LIMIT 50').bind(tenantId).all();
             executions = res.results || [];
           }
           return jsonResponse({ data: executions, total: executions.length });
